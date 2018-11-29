@@ -10,6 +10,9 @@ OD = OrderedDict
 def create_conf_file(model_path, model_args, sim_args, repeat_sim, output_dir):
     """Create a Spike cnfiguration file (.spc)
 
+    :param model_args:
+    :param repeat_sim:
+    :return:
     :param output_dir:
     :param conf_target_path: Path to write conf file
     :param model_path: Model to import
