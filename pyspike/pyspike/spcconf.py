@@ -7,7 +7,7 @@ from collections import OrderedDict
 OD = OrderedDict
 
 
-def create_conf_file(conf_target_path, model_path, model_args, sim_args, repeat_sim, output_dir):
+def create_conf_file(model_path, model_args, sim_args, repeat_sim, output_dir):
     """Create a Spike cnfiguration file (.spc)
 
     :param output_dir:
@@ -38,10 +38,8 @@ def create_conf_file(conf_target_path, model_path, model_args, sim_args, repeat_
 
     od = args_to_od(model_path, model_args, sim_args, repeat_sim)
     spc_string = od_to_spc(od)
-    with open(conf_target_path, 'w') as f:
-        f.write(spc_string)
 
-    return export_path_list
+    return export_path_list, spc_string
 
 
 def args_to_od(model_path, model_args, sim_args, repeat_sim=1):
