@@ -3,7 +3,7 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import matplotlib.pyplot as plt
 
-from pyspike import temporal, read_csv
+from pyspike import temporal, read_csv, tidydata
 
 import os
 
@@ -11,10 +11,7 @@ from pyspike.temporal import generate_place_change_events, generate_transition_e
 
 PLOT = True
 
-THIS_DIR = os.path.dirname(os.path.realpath(__file__))
-TEMPORAL = os.path.join(THIS_DIR, 'files', 'temporal')
-PLACES = os.path.join(TEMPORAL, 'places.csv')
-TRANSITIONS = os.path.join(TEMPORAL, 'transitions.csv')
+from tests.files import TRANSITIONS, PLACES
 
 
 def test_generate_state_change_frame():
@@ -82,11 +79,14 @@ def test_generate_causal_graph_with_run_77():
     if PLOT:
         nx.draw(causal_graph, with_labels=True)
         plt.show()
-    log(causal_graph.nodes)
-    assert list(causal_graph.nodes) == [
-        (0, 'a', 0.0), (1, 'a', 0.0), (2, 'a', 0.0), (3, 'a', 0.0), (4, 'a', 0.0), (5, 'a', 0.0),
-        (0, 'b', 1.1), (5, 'b', 2.0), (4, 'b', 3.0), (3, 'b', 4.0), (2, 'b', 5.1), (1, 'b', 6.1)
+    log('actual:', causal_graph.nodes)
+    O = Occasion
+    desired = [
+        O(0, 'a', 0.0), O(1, 'a', 0.0), O(2, 'a', 0.0), O(3, 'a', 0.0), O(4, 'a', 0.0), O(5, 'a', 0.0),
+        O(5, 'b', 2.0), O(0, 'b', 1.1), O(4, 'b', 3.0), O(3, 'b', 4.0), O(2, 'b', 5.1), O(1, 'b', 6.1)
     ]
+    log('desired:', desired)
+    assert list(causal_graph.nodes) == desired
 
 
     edge_tuples = list(causal_graph.edges)
@@ -154,6 +154,9 @@ class TestCausalPlotting(object):
             filename=f"/Users/walton/dphil/proof-of-concept/runs/{run_number}/transitions.csv",
             node_type="transition", drop_non_coloured_sums=True)
 
+        places = tidydata.prepend_tidy_frame_with_tstep(places)
+        transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
+
         place_change_events = generate_place_change_events(places)
         transition_events = generate_transition_events(transitions)
 
@@ -174,8 +177,10 @@ class TestCausalPlotting(object):
 def _load_run_77():
     graph_medium = _gen_loop_graph(6)
     places = read_csv(PLACES, 'place', drop_non_coloured_sums=True)
+    places = tidydata.prepend_tidy_frame_with_tstep(places)
     place_change_events = generate_place_change_events(places)
     transitions = read_csv(TRANSITIONS, 'transition', drop_non_coloured_sums=True)
+    transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
     transition_events = generate_transition_events(transitions)
     return graph_medium, place_change_events, transition_events
 

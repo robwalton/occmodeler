@@ -44,35 +44,22 @@ def generate_causal_graph(place_change_events: DataFrame,
                           transition_events: DataFrame):
     g = nx.DiGraph()  # Nodes are occasions and edges leading in their prehensions
 
-    step_time = 0.1  # TODO: MUST NOT REMAIN HARD CODED!
-
-    # Add a node representing each state change, or _occasion_.
-    for occ in place_change_events.itertuples():
+    # Add the initial state for each node as an occasion with no past
+    initial_occasions = place_change_events.query('tstep == 0')
+    for occ in initial_occasions.itertuples():
         g.add_node(Occasion(int(occ.num), occ.name, occ.time))  # unit, state, time
 
     # Visit each transition and identify i) its output node and its 2 input nodes
     for trans in transition_events.itertuples():
-        # row has: time, name, unit, neighbour & count
-        assert trans.count == 1
+        # row has: tstep, time, name, unit, neighbour & count
 
-        # Determine output node for this transition
+        assert trans.count == 1  # Statistically likely to happen as simulations
+        # get more complex or are undersampled. Condier what to do if this occurs --Rob
+
+        # Create new occasion in graph for this transition
         output_state = trans.name[1]  # ab -> b
         output_occasion = Occasion(int(trans.unit), output_state, trans.time)
-
-        if not g.has_node(output_occasion):
-            output_occasion_orig = output_occasion
-            print(f"WARNING: {output_occasion} not in graph nodes. Trying one step later")
-            output_occasion = Occasion(
-                int(trans.unit), output_state, trans.time + step_time)
-            if not g.has_node(output_occasion):
-                print(f"WARNING: {output_occasion} not in graph nodes. Trying two steps earlier")
-                output_occasion = Occasion(
-                    int(trans.unit), output_state, trans.time - step_time)
-                if not g.has_node(output_occasion):
-                    msg = f"{output_occasion_orig} +/- {step_time} not in graph nodes: {g.nodes}"
-                    print('WARNING: ' + msg)
-                    # raise AssertionError(msg)
-        print(f'output occasion {output_occasion} found for transition')
+        g.add_node(output_occasion)
 
         # Determine local input node from same unit
         state_name = trans.name[0]  # ab -> a
