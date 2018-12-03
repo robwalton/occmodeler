@@ -1,0 +1,62 @@
+type: colspn
+name: 4_last_registered_network_notxrx
+colorsets:
+  Unit: "{0..29}"
+
+variables:
+  Unit: [u, n]
+
+colorfunctions:
+  - "bool  is_neighbour(Unit u,Unit n) {$FUNC$}"
+
+places:
+  discrete:
+    Unit:
+      C: 0`0
+      a: 1`all
+      b: 0`0
+      c: 0`0
+
+transitions:
+  x_mimic:
+    [a, b]:
+    [b, c]:
+    [b, C]:
+    [c, C]:
+    [C, c]:
+# Note: the following are from model/social/notebook/2018-11-29/deterministic-one-transition-right-only-six-loop.candl
+  deterministic:
+    x_boot_deterministic:
+      [a, b]:
+        color: 0
+        delay: 1
+
+
+x_transition_templates:
+  x_mimic: |
+    {{[is_neighbour(u, n)]}}
+       : [{key[1]} >= {{n}}]
+       : [{key[1]} + {{u}}] & [{key[0]} - {{u}}]
+       : MassAction(1)
+       ;
+  x_boot_deterministic: |
+    :
+    : [{key[1]} + {color}] & [{key[1]} - {$color$}]
+    : {delay}
+    ;
+
+  x_boot_statistical: |
+    :
+    : [{key[1]} + {0++15}] & [a - {0++15}]
+    : MassAction(1)
+    ;
+
+*********
+x_mimic="""
+{{[is_neighbour(u, n)]}}
+  : [{key[1]} >= {{n}}]
+  : [{key[1]} + {{u}}] & [{key[0]} - {{u}}]
+  : MassAction(1)
+  ;""".strip()
+
+print(x_mimic.format(**dict(key=['a', 'b'])))

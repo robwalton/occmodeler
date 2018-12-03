@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 #%% Read and filter data
 
@@ -6,7 +7,7 @@ import pandas as pd
 NODE_TYPES = ('place', 'transition')
 
 
-def read_csv(filename, node_type, filter_name_list=None):
+def read_csv(filename, node_type, filter_name_list=None, drop_non_coloured_sums=False):
     """
     Reads a csv file created by spike with columns named according to:
     - Time --> time
@@ -17,7 +18,7 @@ def read_csv(filename, node_type, filter_name_list=None):
 
     assert node_type in NODE_TYPES
     raw_frame = pd.read_csv(filename, delimiter=';')
-    frame = tidy_frame(raw_frame, node_type)
+    frame = tidy_frame(raw_frame, node_type, drop_non_coloured_sums)
 
     # Filer by name if provided
     if filter_name_list:
@@ -26,26 +27,47 @@ def read_csv(filename, node_type, filter_name_list=None):
     return frame
 
 
-def tidy_frame(raw_frame, node_type):
+def tidy_frame(raw_frame, node_type, drop_non_coloured_sums=False):
     assert node_type in NODE_TYPES
 
     # r: gather(node, count, -Time)
     frame = pd.melt(raw_frame, id_vars=['Time'])
     frame['type'] = node_type
 
-    # Expand variable name into name and node
-    # r: separate(node, into = c("name", "num"), "sep" = "_(?!.*_)", fill = "right", extra = "merge")
-    frame['name'], frame['num'] = frame['variable'].str.rsplit('_', 1).str
-    del frame['variable']
+    if node_type == 'place':
+        # Expand variable name into name and node
+        # r: separate(node, into = c("name", "num"), "sep" = "_(?!.*_)", fill = "right", extra = "merge")
+        frame['name'], frame['num'] = frame['variable'].str.rsplit('_', 1).str
+        del frame['variable']
+        frame = frame.reindex(columns=['Time', 'type', 'name', 'num', 'value'])
+        frame['Time'] = pd.to_numeric(frame['Time'], errors='coerce')
+        frame['num'] = pd.to_numeric(frame['num'], errors='coerce')
 
+        # frame = frame.astype({'num': np.int16, 'Time': float}, errors='coerce')
+
+    if node_type == 'transition':
+        # Expand variable name into name and node
+        # r: separate(node, into = c("name", "num"), "sep" = "_(?!.*_)", fill = "right", extra = "merge")
+        re_string = r"(?P<name>[^\W_]+)(?:_+)(?P<neighbour>[0-9]+)(?:_*)(?P<unit>[^\W_]+)*"
+        new_col_frame = frame['variable'].str.extract(re_string)
+        del frame['variable']
+        frame['name'] = new_col_frame['name']
+        frame['unit'] = new_col_frame['unit']
+        frame['neighbour'] = new_col_frame['neighbour']
+        frame = frame.reindex(columns=['Time', 'type', 'name', 'unit', 'neighbour', 'value'])
+        # frame = frame.astype({'unit': int, 'neighbour': int, 'Time': float}, errors='ignore')
+        frame['Time'] = pd.to_numeric(frame['Time'], errors='coerce')
+        frame['unit'] = pd.to_numeric(frame['unit'], errors='coerce')
+        frame['neighbour'] = pd.to_numeric(frame['neighbour'], errors='coerce')
     # msg not implemented in python yet
     # r: extract(node, c("name", "num", "msg"), "([^\\W_]+)(?:_+)([0-9]+)(?:_*)([^\\W_]+)*")
 
     # Reorder columns
-    frame = frame.reindex(columns=['Time', 'type', 'name', 'num', 'value'])
-
-    # Make Time lowercase
     frame.rename(columns={'Time': 'time', 'value': 'count'}, inplace=True)
+
+    if drop_non_coloured_sums:
+        frame.dropna(inplace=True)
+
     return frame
     # r: nodes$num < - as.integer(nodes$num)
 
@@ -57,6 +79,7 @@ def filter_by_name(frame, name_list):
 
 
 def insert_step_column_based_on_unique_time_vals(places):
+    # TODO: probably very slow!
     z = {v: i for i, v in enumerate(places['time'].unique())}
     places.insert(0, 'step', places['time'].map(z))
 

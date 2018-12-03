@@ -1,0 +1,67 @@
+colspn  [4_last_registered_network_notxrx]
+{
+colorsets:
+  Unit = {0..29};
+
+variables:
+  Unit : u;
+  Unit : n;
+
+colorfunctions:
+bool  is_neighbour(Unit u,Unit n) {$FUNC$};
+
+places:
+discrete:
+  Unit c = 0`0;
+  Unit a = 1`all;
+  Unit b = 0`0;
+  Unit C = 0`0;
+
+transitions:
+  bootbc
+    : 
+    : [c + {0}] & [b - {0}]
+    : MassAction(1)
+    ;
+  bootab
+    : 
+    : [b + {0++15}] & [a - {0++15}]
+    : MassAction(1)
+    ;
+  bc
+ {[is_neighbour(u, n)]}
+    : [c >= {n}]
+    : [c + {u}] & [b - {u}]
+    : MassAction(1)
+    ;
+  ab
+ {[is_neighbour(u, n)]}
+    : [b >= {n}]
+    : [b + {u}] & [a - {u}]
+    : MassAction(1)
+    ;
+  bC
+ {[is_neighbour(u, n)]}
+    : [C >= {n}]
+    : [C + {u}] & [b - {u}]
+    : MassAction(1)
+    ;
+  bootbC
+    : 
+    : [C + {15}] & [b - {15}]
+    : MassAction(1)
+    ;
+  cC
+ {[is_neighbour(u, n)]}
+    : [C >= {n}]
+    : [C + {u}] & [c - {u}]
+    : MassAction(1)
+    ;
+  Cc
+ {[is_neighbour(u, n)]}
+    : [c >= {n}]
+    : [c + {u}] & [C - {u}]
+    : MassAction(1)
+    ;
+
+}
