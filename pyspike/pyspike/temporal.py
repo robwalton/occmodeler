@@ -2,13 +2,16 @@ from collections import namedtuple, defaultdict
 
 import networkx as nx
 import pandas as pd
+import numpy as np
 import colorlover as cl
+
 
 
 from pandas import DataFrame
 import plotly.offline as py
 import plotly.graph_objs as go
 
+OVERLINE = '\u0304'
 
 def generate_place_change_events(df):
     df.sort_values(by=['time'])
@@ -92,14 +95,15 @@ NOAXIS = dict(
 )
 
 
-def plot_causal_graph(causal_graph, medium_graph, medium_layout=None):
-
+def plot_causal_graph(causal_graph, medium_graph, medium_layout=None, show_local_prehensions=True, z_scale=2):
+    # TODO: the z scale has no effect as plotly autofits entire structure
+    # TODO: switch time to x axis?
     # determine state names and colours
     state_name_list = list(extract_state_names_from_causal_graph(causal_graph))
     state_name_list.sort()
     color_list = cl.scales['9']['qual']['Set1']
     color_list = color_list[:len(state_name_list)]
-    color_list.reverse()
+    # color_list.reverse()
 
     # TODO: check unit numbering on both graphs for consistency
 
@@ -114,7 +118,7 @@ def plot_causal_graph(causal_graph, medium_graph, medium_layout=None):
 
     # Create a node list for occasions of each state, and edge list for edges leaving that stat
     def t_to_z(t):
-        return t * 0.3
+        return t * z_scale
     occasion_by_state_dict = index_causal_graph_by_state(causal_graph)
     node_trace_list = []
     edge_trace_list = []
@@ -130,8 +134,11 @@ def plot_causal_graph(causal_graph, medium_graph, medium_layout=None):
         for occ in occasion_list:
             edges = list(causal_graph.edges(occ))
             for edge in edges:
-                if edge[1].unit != occ.unit:
+                if show_local_prehensions:
                     output_edge_list.append(edge)
+                else:
+                    if edge[1].unit != occ.unit:
+                        output_edge_list.append(edge)
             # print(f"{occ} edges: {edge_list}")
 
         edge_trace_list.append(
@@ -145,7 +152,7 @@ def render_plot(edge_trace_list, medium_edge_trace, node_trace_list):
     py.plot(dict(
         data=[medium_edge_trace] + node_trace_list + edge_trace_list,
         layout=go.Layout(
-            showlegend=False,
+            # showlegend=False,
             hovermode='closest',
             scene=dict(
                 xaxis=NOAXIS,
@@ -160,12 +167,16 @@ def generate_occasion_trace(occasion_list, color, medium_layout, t_to_z):
     nx_ = []
     ny = []
     nz = []
+    state_name = occasion_list[0].state
+    print(f"{state_name} occasions are colour {color}")
     for occ in occasion_list:
         x, y = medium_layout[occ.unit]
         nx_.append(x)
         ny.append(y)
         nz.append(t_to_z(occ.time))
+        assert occ.state == state_name
     return go.Scatter3d(
+        name=render_name(state_name),
         x=nx_,
         y=ny,
         z=nz,
@@ -175,8 +186,8 @@ def generate_occasion_trace(occasion_list, color, medium_layout, t_to_z):
         marker=dict(
             color=color,
             opacity=0.7,
-            size=15,
-            line=dict(width=5),
+            # size=15,
+            # line=dict(width=5),
         ),
     )
 
@@ -185,17 +196,30 @@ def generate_edge_trace(output_edge_list, color, medium_layout, t_to_z):
     edge_x = []
     edge_y = []
     edge_z = []
+    state_name = output_edge_list[0][0].state
+
     for e in output_edge_list:
+        assert e[0].state == state_name
         xy_start = medium_layout[e[0].unit]
         xy_end = medium_layout[e[1].unit]
         z_start = t_to_z(e[0].time)
         z_end = t_to_z(e[1].time)
-        edge_x += [xy_start[0], xy_end[0], None]
-        edge_y += [xy_start[1], xy_end[1], None]
-        edge_z += [z_start, z_end, None]
+        start = (xy_start[0], xy_start[1], z_start)
+        end = (xy_end[0], xy_end[1], z_end)
+
+        P0 = start
+        P1 = [end[0], end[1], start[2]]
+        P2 = P1
+        P3 = end
+        x, y, z = bezier_3d(P0, P1, P2, P3)
+        edge_x += [None] + list(x)
+        edge_y += [None] + list(y)
+        edge_z += [None] + list(z)
+
     return go.Scatter3d(
+        name=render_name(state_name),
         x=edge_x, y=edge_y, z=edge_z,
-        line=dict(color=color, width=8),  # width=0.5,
+        line=dict(color=color), # width=8),  # width=0.5,
         hoverinfo='none',
         mode='lines'
     )
@@ -212,6 +236,7 @@ def _generate_medium_edge_trace(medium_graph, medium_layout):
         edge_y += [xy_start[1], xy_end[1], None]
         edge_z += [0, 0, None]
     return go.Scatter3d(
+        name='M',
         x=edge_x, y=edge_y, z=edge_z,
         line=dict(color='#888'),  # width=0.5,
         hoverinfo='none',
@@ -232,4 +257,24 @@ def index_causal_graph_by_state(causal_graph):
     for occasion in causal_graph:
         d[occasion.state].append(occasion)
     return d
+
+
+def bezier(P0, P1, P2, P3, t=np.linspace(0, 1, 20)):
+    return (
+        (1 - t) ** 3 * P0 +
+        3 * (1 - t) ** 2 * t * P1 +
+        3 * (1 - t) * t * t * P2 +
+        t ** 3 * P3
+    )
+
+
+def bezier_3d(P0, P1, P2, P3, t=np.linspace(0, 1, 20)):
+    x = bezier(P0[0], P1[0], P2[0], P3[0], t=t)
+    y = bezier(P0[1], P1[1], P2[1], P3[1], t=t)
+    z = bezier(P0[2], P1[2], P2[2], P3[2], t=t)
+    return x, y, z
+
+
+def render_name(name):
+    return name.lower() + OVERLINE if name.isupper() else name
 
