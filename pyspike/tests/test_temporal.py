@@ -87,7 +87,37 @@ def test_generate_causal_graph_with_run_77():
         (0, 'a', 0.0), (1, 'a', 0.0), (2, 'a', 0.0), (3, 'a', 0.0), (4, 'a', 0.0), (5, 'a', 0.0),
         (0, 'b', 1.1), (5, 'b', 2.0), (4, 'b', 3.0), (3, 'b', 4.0), (2, 'b', 5.1), (1, 'b', 6.1)
     ]
-    log('edges', g.edges)
+
+
+    edge_tuples = list(causal_graph.edges)
+
+
+    def occ_pair(a, b):
+        # s of form a1@0.0
+        astate, aunit, atime = a[0], a[1], a[-3:]
+        bstate, bunit, btime = b[0], b[1], b[-3:]
+        return (Occasion(aunit, astate, atime), Occasion(bunit, bstate, btime))
+
+    desired_edge_tuples = [
+        occ_pair('a1@0.0', 'b1@6.1'),
+        occ_pair('a2@0.0', 'b2@5.1'),
+        occ_pair('a3@0.0', 'b3@4.0'),
+        occ_pair('a4@0.0', 'b4@3.0'),
+        occ_pair('a5@0.0', 'b5@2.0'),
+        occ_pair('b0@1.1', 'b5@2.0'),
+        occ_pair('b5@2.0', 'b4@3.0'),
+        occ_pair('b4@3.0', 'b3@4.0'),
+        occ_pair('b3@4.0', 'b2@5.1'),
+        occ_pair('b2@5.1', 'b1@6.1')]
+
+    assert len(edge_tuples) == len(desired_edge_tuples)
+
+    # for desired_edge_tuple in desired_edge_tuples:
+    #     assert desired_edge_tuple in edge_tuples
+
+
+
+    log('edgess', edge_tuples)
     # TODO: check edges!
 
 
@@ -112,6 +142,7 @@ class TestCausalPlotting(object):
     def test_extract_unit_numbers(self):
         causal_graph, graph_medium = self._load_graph_77()
         assert temporal.extract_unit_numbers_from_causal_graph(causal_graph) == set(range(6))
+
 
     def test_with_run_71(self):
 

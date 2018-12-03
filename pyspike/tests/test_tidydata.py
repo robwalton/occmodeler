@@ -20,7 +20,6 @@ def raw_frame(raw_columns):
     return df
 
 
-
 @pytest.fixture()
 def tidy_frame():
     rows = [
@@ -36,11 +35,23 @@ def tidy_frame():
     return df
 
 
-def test_tidy(raw_frame, tidy_frame):
+def test_tidy_places(raw_frame, tidy_frame):
     frame = tidydata.tidy_frame(raw_frame, 'place')
     log('result', frame)
     log('desired', tidy_frame)
     assert_frame_equal(frame, tidy_frame)
+
+
+def test_prepend_tidy_frame_with_tstep():
+    f_in = pd.DataFrame()
+    f_in['time'] = pd.Series([0., 0., .1, .1, .2, .2])
+    f_in['x'] = pd.Series([1, 2, 3, 4, 5, 6])
+    desired = f_in.copy()
+    desired.insert(0, 'tstep', pd.Series([0, 0, 1, 1, 2, 2]))
+    actual = tidydata.prepend_tidy_frame_with_tstep(f_in)
+    log('desired:', desired)
+    assert_frame_equal(actual, desired)
+
 
 
 def test_tidy_transitions():

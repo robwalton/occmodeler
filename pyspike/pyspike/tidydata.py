@@ -78,10 +78,10 @@ def filter_by_name(frame, name_list):
     return frame
 
 
-def insert_step_column_based_on_unique_time_vals(places):
+def prepend_tidy_frame_with_tstep(places):
     # TODO: probably very slow!
     z = {v: i for i, v in enumerate(places['time'].unique())}
-    places.insert(0, 'step', places['time'].map(z))
-
+    places.insert(0, 'tstep', places['time'].map(z))
+    return places
 
 
