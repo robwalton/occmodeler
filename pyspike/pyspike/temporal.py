@@ -100,10 +100,11 @@ def plot_causal_graph(causal_graph, medium_graph, medium_layout=None, show_local
     # TODO: switch time to x axis?
     # determine state names and colours
     state_name_list = list(extract_state_names_from_causal_graph(causal_graph))
-    state_name_list.sort()
+    state_name_list.sort(key=str.lower)
+
     color_list = cl.scales['9']['qual']['Set1']
     color_list = color_list[:len(state_name_list)]
-    # color_list.reverse()
+    color_list.reverse()
 
     # TODO: check unit numbering on both graphs for consistency
 
