@@ -8,10 +8,11 @@ import colorlover as cl
 
 
 from pandas import DataFrame
-import plotly.offline as py
 import plotly.graph_objs as go
 
-OVERLINE = '\u0304'
+import pyspike
+from pyspike.util import render_name
+
 
 def generate_place_change_events(df):
     df.sort_values(by=['time'])
@@ -95,16 +96,13 @@ NOAXIS = dict(
 )
 
 
-def plot_causal_graph(causal_graph, medium_graph, medium_layout=None, show_local_prehensions=True, z_scale=2):
+def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None, show_local_prehensions=True, z_scale=2):
     # TODO: the z scale has no effect as plotly autofits entire structure
     # TODO: switch time to x axis?
     # determine state names and colours
     state_name_list = list(extract_state_names_from_causal_graph(causal_graph))
     state_name_list.sort(key=str.lower)
-
-    color_list = cl.scales['9']['qual']['Set1']
-    color_list = color_list[:len(state_name_list)]
-    color_list.reverse()
+    ordered_state_list, color_dict = pyspike.util.generate_state_order_and_colours(state_name_list)
 
     # TODO: check unit numbering on both graphs for consistency
 
@@ -124,7 +122,8 @@ def plot_causal_graph(causal_graph, medium_graph, medium_layout=None, show_local
     node_trace_list = []
     edge_trace_list = []
 
-    for state_name, color in zip(state_name_list, color_list):
+    for state_name in ordered_state_list:
+        color = color_dict[state_name]
         occasion_list = occasion_by_state_dict[state_name]
         node_trace_list.append(
             generate_occasion_trace(occasion_list, color, medium_layout, t_to_z)
@@ -146,11 +145,12 @@ def plot_causal_graph(causal_graph, medium_graph, medium_layout=None, show_local
             generate_edge_trace(output_edge_list, color, medium_layout, t_to_z)
         )
 
-    render_plot(edge_trace_list, medium_edge_trace, node_trace_list)
+    fig = render_plot(edge_trace_list, medium_edge_trace, node_trace_list)
+    return fig
 
 
 def render_plot(edge_trace_list, medium_edge_trace, node_trace_list):
-    py.plot(dict(
+    fig = go.Figure(dict(
         data=[medium_edge_trace] + node_trace_list + edge_trace_list,
         layout=go.Layout(
             # showlegend=False,
@@ -161,7 +161,8 @@ def render_plot(edge_trace_list, medium_edge_trace, node_trace_list):
                 zaxis=NOAXIS
             )
         )
-    ), auto_open=True)
+    ))
+    return fig
 
 
 def generate_occasion_trace(occasion_list, color, medium_layout, t_to_z):
@@ -186,7 +187,7 @@ def generate_occasion_trace(occasion_list, color, medium_layout, t_to_z):
         text=list(occasion_list),  # gives names
         marker=dict(
             color=color,
-            opacity=0.7,
+            opacity=0.5,
             # size=15,
             # line=dict(width=5),
         ),
@@ -275,7 +276,4 @@ def bezier_3d(P0, P1, P2, P3, t=np.linspace(0, 1, 20)):
     z = bezier(P0[2], P1[2], P2[2], P3[2], t=t)
     return x, y, z
 
-
-def render_name(name):
-    return name.lower() + OVERLINE if name.isupper() else name
 

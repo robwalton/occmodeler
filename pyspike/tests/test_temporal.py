@@ -2,6 +2,7 @@ import networkx as nx
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import matplotlib.pyplot as plt
+import plotly.offline as py
 
 from pyspike import temporal, read_csv, tidydata
 
@@ -132,8 +133,9 @@ class TestCausalPlotting(object):
 
     def test_plot_causal_graph_with_run_77(self):
         causal_graph, graph_medium = self._load_graph_77()
+        fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium)
         if PLOT:
-            temporal.plot_causal_graph(causal_graph, graph_medium)
+            url = py.plot(fig)
 
     def test_extract_state_names(self):
         causal_graph, graph_medium = self._load_graph_77()
@@ -145,7 +147,7 @@ class TestCausalPlotting(object):
 
 
     def test_with_run_71(self):
-
+        # TODO: remove external dependencies
         run_number = 71
         places = read_csv(
             filename=f"/Users/walton/dphil/proof-of-concept/runs/{run_number}/places.csv",
@@ -162,12 +164,13 @@ class TestCausalPlotting(object):
 
         causal_graph = generate_causal_graph(
             place_change_events, transition_events)
-        medium_graph = nx.read_gml(
+        graph_medium = nx.read_gml(
                 "/Users/walton/dphil/proof-of-concept/model/social/notebook/2018-11-22/1.gml",
                 destringizer=int)
 
+        fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium)
         if PLOT:
-            temporal.plot_causal_graph(causal_graph, medium_graph)
+            url = py.plot(fig)
 
 
 
