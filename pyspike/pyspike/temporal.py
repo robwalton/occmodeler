@@ -101,7 +101,6 @@ def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None,
     # TODO: switch time to x axis?
     # determine state names and colours
     state_name_list = list(extract_state_names_from_causal_graph(causal_graph))
-    state_name_list.sort(key=str.lower)
     ordered_state_list, color_dict = pyspike.util.generate_state_order_and_colours(state_name_list)
 
     # TODO: check unit numbering on both graphs for consistency
