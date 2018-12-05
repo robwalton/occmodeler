@@ -11,7 +11,7 @@ import pyspike.util
 from pyspike.util import render_name
 
 
-def generate_sums_by_state_figure(places_path: Path):
+def generate_sums_by_state_figure(places_path: Path, run_id=None):
 
     assert places_path.exists()
     places = tidydata.read_csv(str(places_path), 'place', drop_non_coloured_sums=False)
@@ -32,9 +32,10 @@ def generate_sums_by_state_figure(places_path: Path):
                 line=dict(color=color)
             )
         )
+    title = f"Non coloured sums for run {run_id}" if run_id else "Non coloured sums"
 
     layout = go.Layout(
-        title='Non coloured sums',
+        title=title,
         yaxis=dict(title='count'),
         xaxis=dict(title='time')
     )

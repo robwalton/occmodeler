@@ -96,7 +96,7 @@ NOAXIS = dict(
 )
 
 
-def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None, show_local_prehensions=True, z_scale=2):
+def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None, show_local_prehensions=True, z_scale=2, run_id=None):
     # TODO: the z scale has no effect as plotly autofits entire structure
     # TODO: switch time to x axis?
     # determine state names and colours
@@ -144,14 +144,16 @@ def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None,
             generate_edge_trace(output_edge_list, color, medium_layout, t_to_z)
         )
 
-    fig = render_plot(edge_trace_list, medium_edge_trace, node_trace_list)
+    fig = render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id)
     return fig
 
 
-def render_plot(edge_trace_list, medium_edge_trace, node_trace_list):
+def render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id=None):
+    title = f"Temporal graph for run {run_id}" if run_id else "Temporal graph"
     fig = go.Figure(dict(
         data=[medium_edge_trace] + node_trace_list + edge_trace_list,
         layout=go.Layout(
+            title=title,
             # showlegend=False,
             hovermode='closest',
             scene=dict(
@@ -197,7 +199,13 @@ def generate_edge_trace(output_edge_list, color, medium_layout, t_to_z):
     edge_x = []
     edge_y = []
     edge_z = []
-    state_name = output_edge_list[0][0].state
+    try:
+        state_name = output_edge_list[0][0].state
+    except IndexError:
+        print('-----')
+        print(output_edge_list)
+        print('-----')
+        raise
 
     for e in output_edge_list:
         assert e[0].state == state_name
