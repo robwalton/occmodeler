@@ -95,8 +95,10 @@ NOAXIS = dict(
     showspikes=False
 )
 
+# NOAXIS = {}
 
-def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None, show_local_prehensions=True, z_scale=2, run_id=None):
+
+def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None, show_local_prehensions=True, z_scale=.2, run_id=None):
     # TODO: the z scale has no effect as plotly autofits entire structure
     # TODO: switch time to x axis?
     # determine state names and colours
@@ -108,7 +110,13 @@ def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None,
     # Layout medium graph
     # (location will be used as location in x, y plane for occasions)
     if not medium_layout:
-        medium_layout = nx.spring_layout(medium_graph, dim=2)
+        pos = nx.get_node_attributes(medium_graph, 'pos')
+        if pos:
+            medium_layout = pos
+        else:
+            medium_layout = nx.spring_layout(medium_graph, dim=2)
+
+
 
     # Create initial edge trace to show layout
     medium_edge_trace = _generate_medium_edge_trace(
@@ -128,22 +136,24 @@ def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None,
             generate_occasion_trace(occasion_list, color, medium_layout, t_to_z)
         )
 
-        output_edge_list = []
+        neighbour_output_edge_list = []
+        local_output_edge_list = []
         # Add edges from each occasion
         for occ in occasion_list:
             edges = list(causal_graph.edges(occ))
             for edge in edges:
-                if show_local_prehensions:
-                    output_edge_list.append(edge)
+                if edge[1].unit == occ.unit:
+                    local_output_edge_list.append(edge)
                 else:
-                    if edge[1].unit != occ.unit:
-                        output_edge_list.append(edge)
+                    neighbour_output_edge_list.append(edge)
             # print(f"{occ} edges: {edge_list}")
 
         edge_trace_list.append(
-            generate_edge_trace(output_edge_list, color, medium_layout, t_to_z)
+            generate_edge_trace(local_output_edge_list, color, medium_layout, t_to_z, state_name, dash='dot')
         )
-
+        edge_trace_list.append(
+            generate_edge_trace(neighbour_output_edge_list, color, medium_layout, t_to_z, state_name)
+        )
     fig = render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id)
     return fig
 
@@ -171,7 +181,7 @@ def generate_occasion_trace(occasion_list, color, medium_layout, t_to_z):
     ny = []
     nz = []
     state_name = occasion_list[0].state
-    print(f"{state_name} occasions are colour {color}")
+    # print(f"{state_name} occasions are colour {color}")
     for occ in occasion_list:
         x, y = medium_layout[occ.unit]
         nx_.append(x)
@@ -195,17 +205,10 @@ def generate_occasion_trace(occasion_list, color, medium_layout, t_to_z):
     )
 
 
-def generate_edge_trace(output_edge_list, color, medium_layout, t_to_z):
+def generate_edge_trace(output_edge_list, color, medium_layout, t_to_z, state_name, dash=None):
     edge_x = []
     edge_y = []
     edge_z = []
-    try:
-        state_name = output_edge_list[0][0].state
-    except IndexError:
-        print('-----')
-        print(output_edge_list)
-        print('-----')
-        raise
 
     for e in output_edge_list:
         assert e[0].state == state_name
@@ -225,13 +228,20 @@ def generate_edge_trace(output_edge_list, color, medium_layout, t_to_z):
         edge_y += [None] + list(y)
         edge_z += [None] + list(z)
 
-    return go.Scatter3d(
+    line_dict = dict(color=color)
+    if dash:
+        line_dict['dash'] = dash
+    # dash options include 'dash', 'dot', and 'dashdot'
+    trace = go.Scatter3d(
         name=render_name(state_name),
         x=edge_x, y=edge_y, z=edge_z,
-        line=dict(color=color), # width=8),  # width=0.5,
+        line=line_dict,  # width=8),  # width=0.5,
         hoverinfo='none',
-        mode='lines'
+        mode='lines',
     )
+
+
+    return trace
 
 
 def _generate_medium_edge_trace(medium_graph, medium_layout):

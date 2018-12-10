@@ -2,14 +2,10 @@ import time
 
 import networkx as nx
 import numpy as np
-import plotly.offline as pl
 import plotly.graph_objs as go
-from IPython.display import display, HTML
 
 import pyspike
-from pyspike import read_csv, tidydata
 from pyspike.util import render_name
-from tests.files import RUN_71_PLACES, RUN_71_TRANSITIONS, RUN_71_NETWORK_GML
 
 
 def render_plot(medium_edge_trace, initial_node_traces, frames=[], tstep_for_each_frame=[], slider_step_list=[], run_id=None): #edge_trace_list, medium_edge_trace, node_trace_list):
@@ -148,13 +144,18 @@ def _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_
 
 def generate_network_animation_figure_with_slider(places, medium_graph, medium_layout=None, run_id=None):
 
-    start_time = time.time()
+    # start_time = time.time()
     state_name_list = list(places.name.unique())
     ordered_state_list, color_dict = pyspike.util.generate_state_order_and_colours(state_name_list)
 
     # Create initial edge trace to show layout
     if not medium_layout:
-        medium_layout = nx.spring_layout(medium_graph, dim=2)
+        pos = nx.get_node_attributes(medium_graph, 'pos')
+        if pos:
+            medium_layout = pos
+        else:
+            medium_layout = nx.spring_layout(medium_graph, dim=2)
+
     medium_edge_trace = _generate_medium_edge_trace(
         medium_graph, medium_layout)
 
@@ -169,7 +170,6 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
     sliders_step_list = []  # one per frame
     places.sort_values('num', inplace=True)
     for tstep in tstep_list:
-        print(tstep)
         frame_data = _generate_plotly_node_data_trace_list(
             places, medium_layout, tstep, ordered_state_list, color_dict, diff_only=True)
         num_traces = len(ordered_state_list)
@@ -191,6 +191,6 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
         }
 
         sliders_step_list.append(slider_step)
-    print(f"generate_network_animation_figure_with_slider() ran in {time.time() - start_time} s")
+    # print(f"generate_network_animation_figure_with_slider() ran in {time.time() - start_time} s")
     fig = render_plot(medium_edge_trace, initial_node_traces, frames, tstep_list, sliders_step_list, run_id)
     return fig

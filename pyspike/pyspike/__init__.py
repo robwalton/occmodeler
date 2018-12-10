@@ -5,10 +5,13 @@ from pyspike.tidydata import read_csv
 import subprocess
 
 
-def call_spike(conf_path):
-    args = ["spike exe -f {}".format(conf_path)]
-    print('Calling: ' + str(args))
-    subprocess.run(args, shell=True) # check=True)
+def call_spike(conf_path, _log=None):
+    args = ["~/bin/spike exe -f {}".format(conf_path)]
+    if _log:
+        _log.info('Calling: ' + str(args))
+    else:
+        print('Calling: ' + str(args))
+    subprocess.run(args, shell=True)  # check=True)
     # spike 1.0.1 always returns error code 1. Reported on 2018/11/2.
     # try:
     #     subprocess.run(["spike help", "-c", "prune"], shell=True, check=True)

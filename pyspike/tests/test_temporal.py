@@ -145,7 +145,6 @@ class TestCausalPlotting(object):
         causal_graph, graph_medium = self._load_graph_77()
         assert temporal.extract_unit_numbers_from_causal_graph(causal_graph) == set(range(6))
 
-
     def test_with_run_71(self):
         # TODO: remove external dependencies
         run_number = 71

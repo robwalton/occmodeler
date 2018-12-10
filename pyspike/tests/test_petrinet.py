@@ -98,15 +98,21 @@ class TestGraphToArcExpression(object):
 
 
 CANDL_TEMPLATE = '''abc
+colorsets:
+  Unit = {$RANGE$};
+abc
 colorfunctions:
 bool  is_neighbour(Unit u,Unit n) {$FUNC$}
-def
+abc
 '''
 
 CANDL_DESIRED = '''abc
+colorsets:
+  Unit = {0..3};
+abc
 colorfunctions:
-bool  is_neighbour(Unit u,Unit n) { (u=1 & (n=2|n=3)) | (u=2 & (n=1|n=3)) | (u=3 & (n=1|n=2|n=4)) | (u=4 & (n=3)) }
-def
+bool  is_neighbour(Unit u,Unit n) { (u=0 & (n=1|n=2)) | (u=1 & (n=0|n=2)) | (u=2 & (n=0|n=1|n=3)) | (u=3 & (n=2)) }
+abc
 '''
 
 
@@ -114,10 +120,10 @@ class TestGenerateCandlFileFromTemplate(object):
 
     def test_with_network(self):
         g = nx.Graph()
+        g.add_edge(0, 1)
         g.add_edge(1, 2)
+        g.add_edge(2, 0)
         g.add_edge(2, 3)
-        g.add_edge(3, 1)
-        g.add_edge(3, 4)
         result = generate_candl_file_from_template(CANDL_TEMPLATE, g)
         assert result == CANDL_DESIRED
 

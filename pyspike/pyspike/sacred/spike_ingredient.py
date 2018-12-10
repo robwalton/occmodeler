@@ -68,8 +68,7 @@ def prep_for_spike_call(model_path, model_args, sim_args, repeat_sim, _log, _run
 
 @spike_ingredient.capture
 def call_spike(_log):
-    pyspike.call_spike(TMP_SPIKE_CONF_PATH)
-    print()
+    pyspike.call_spike(TMP_SPIKE_CONF_PATH, _log)
 
 
 def _create_dirs_if_not_exist(path_list, _log):
