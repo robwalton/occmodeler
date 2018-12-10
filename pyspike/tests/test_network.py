@@ -13,6 +13,7 @@ def test_generate_network_animation_figure_with_slider():
 
     places = read_csv(RUN_71_PLACES, 'place', drop_non_coloured_sums=True)
     places = tidydata.prepend_tidy_frame_with_tstep(places)
+    places.query('time < 8', inplace=True)
     # transitions = read_csv(RUN_71_TRANSITIONS, 'transition', drop_non_coloured_sums=True)
     # transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
 

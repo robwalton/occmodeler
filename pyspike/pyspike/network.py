@@ -5,6 +5,7 @@ import numpy as np
 import plotly.graph_objs as go
 
 import pyspike
+from pyspike import tidydata
 from pyspike.util import render_name
 
 
@@ -144,6 +145,8 @@ def _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_
 
 def generate_network_animation_figure_with_slider(places, medium_graph, medium_layout=None, run_id=None):
 
+
+
     # start_time = time.time()
     state_name_list = list(places.name.unique())
     ordered_state_list, color_dict = pyspike.util.generate_state_order_and_colours(state_name_list)
@@ -163,13 +166,16 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
         places, medium_layout, 0, ordered_state_list, color_dict, diff_only=False)
 
     tstep_list = places.tstep.unique()
+    t_list = places['time'].unique()
+    assert len(tstep_list) == len(t_list)
+    # start, stop, step = tidydata.determine_time_range_of_data_frame(places)
     tstep_list.sort()
-    tstep_list = tstep_list[0:60]
+    # tstep_list = tstep_list[0:60]
     # trace_names = [render_name(n) for n in ordered_state_list]
     frames = []
     sliders_step_list = []  # one per frame
     places.sort_values('num', inplace=True)
-    for tstep in tstep_list:
+    for tstep, t in zip(tstep_list, t_list):
         frame_data = _generate_plotly_node_data_trace_list(
             places, medium_layout, tstep, ordered_state_list, color_dict, diff_only=True)
         num_traces = len(ordered_state_list)
@@ -186,7 +192,7 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
                     'mode': 'immediate'
                 }
             ],
-            'label': str(int(tstep)),
+            'label': str(t),
             'method': 'animate',
         }
 
