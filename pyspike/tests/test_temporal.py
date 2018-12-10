@@ -1,5 +1,6 @@
 import networkx as nx
 import pandas as pd
+import pytest
 from pandas.util.testing import assert_frame_equal
 import matplotlib.pyplot as plt
 import plotly.offline as py
@@ -15,7 +16,8 @@ PLOT = True
 from tests.files import TRANSITIONS, PLACES
 
 
-def test_generate_state_change_frame():
+@pytest.fixture
+def big_example_frame():
     in_rows = [
         # step, time, type, name, num, count
         [0, 0., 'place', 'a', 1, 1],
@@ -43,8 +45,12 @@ def test_generate_state_change_frame():
         [4, 4., 'place', 'b', 1, 0],
         [4, 4., 'place', 'b', 2, 1],
     ]
-    in_frame = pd.DataFrame(
+    return pd.DataFrame(
         in_rows, columns=['step', 'time', 'type', 'name', 'num', 'count'])
+
+
+def test_generate_state_change_frame(big_example_frame):
+
 
     desired_rows = [
         # 'step', 'time', 'type', 'name', 'num']
@@ -61,7 +67,7 @@ def test_generate_state_change_frame():
     desired_frame = desired_frame.sort_values(by=['time', 'num'])
     desired_frame['num'] = pd.to_numeric(desired_frame['num'], downcast='integer')
 
-    actual_frame = temporal.generate_place_change_events(in_frame)
+    actual_frame = temporal.generate_place_change_events(big_example_frame)
     assert_frame_equal(desired_frame.reset_index(drop=True), actual_frame.reset_index(drop=True))
 
 
@@ -75,7 +81,7 @@ def test_generate_causal_graph_with_run_77():
     g, place_change_events, transition_events = _load_run_77()
 
     causal_graph = generate_causal_graph(
-        place_change_events, transition_events)
+        place_change_events, transition_events, 0.1)
 
     if PLOT:
         nx.draw(causal_graph, with_labels=True)
@@ -128,7 +134,7 @@ class TestCausalPlotting(object):
     def _load_graph_77():
         graph_medium, place_change_events, transition_events = _load_run_77()
         causal_graph = generate_causal_graph(
-            place_change_events, transition_events)
+            place_change_events, transition_events, 0.1)
         return causal_graph, graph_medium
 
     def test_plot_causal_graph_with_run_77(self):
@@ -162,7 +168,7 @@ class TestCausalPlotting(object):
         transition_events = generate_transition_events(transitions)
 
         causal_graph = generate_causal_graph(
-            place_change_events, transition_events)
+            place_change_events, transition_events, 0.1)
         graph_medium = nx.read_gml(
                 "/Users/walton/dphil/proof-of-concept/model/social/notebook/2018-11-22/1.gml",
                 destringizer=int)

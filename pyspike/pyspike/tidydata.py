@@ -85,3 +85,12 @@ def prepend_tidy_frame_with_tstep(places):
     return places
 
 
+def determine_time_range_of_data_frame(df):
+    time_values = list(df['time'].unique())
+    time_values.sort()
+    start = time_values[0]
+    stop = time_values[-1]
+    step = time_values[1] - time_values[0]
+    return start, stop, step
+
+

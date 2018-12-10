@@ -86,6 +86,14 @@ def test_filter_by_name_with_all_names(tidy_frame):
     assert_frame_equal(frame, tidy_frame)
 
 
+def test_determine_time_range_of_data_frame(big_example_frame):
+    start, stop, step = tidydata.determine_time_range_of_data_frame(big_example_frame)
+    assert start == 0
+    assert stop == 4
+    assert step == 1
+
+
+
 def log(*thing_list):
     print('---')
     for thing in thing_list:

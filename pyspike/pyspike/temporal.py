@@ -1,3 +1,4 @@
+import math
 from collections import namedtuple, defaultdict
 
 import networkx as nx
@@ -45,7 +46,8 @@ class Occasion(namedtuple('Occasion', ['unit', 'state', 'time'])):
 
 
 def generate_causal_graph(place_change_events: DataFrame,
-                          transition_events: DataFrame):
+                          transition_events: DataFrame,
+                          time_per_step: float):
     g = nx.DiGraph()  # Nodes are occasions and edges leading in their prehensions
 
     # Add the initial state for each node as an occasion with no past
@@ -57,31 +59,43 @@ def generate_causal_graph(place_change_events: DataFrame,
     for trans in transition_events.itertuples():
         # row has: tstep, time, name, unit, neighbour & count
 
-        assert trans.count == 1  # Statistically likely to happen as simulations
-        # get more complex or are undersampled. Condier what to do if this occurs --Rob
+        # TODO: IS IT SAFE TO IGNORE THIS?
+        # assert trans.count == 1  # Statistically likely to happen as simulations get more complex or are undersampled. Consider what to do if this occurs --Rob
 
         # Create new occasion in graph for this transition
         output_state = trans.name[1]  # ab -> b
         output_occasion = Occasion(int(trans.unit), output_state, trans.time)
         g.add_node(output_occasion)
 
+        def choose_best_upstream_occasion(target_unit, target_state_name, source_time):
+            query = f"num=={target_unit} & name=='{target_state_name}' & time<{source_time}"
+            last_transition_time = place_change_events.query(query)['time'].max()
+            if math.isnan(last_transition_time):
+                #  Try including the source time
+                query = f"num=={target_unit} & name=='{target_state_name}' & time=={source_time}"
+                last_transition_time = place_change_events.query(query)['time'].min()
+                if math.isnan(last_transition_time):
+                    #  Try including the step after
+                    query = f"num=={target_unit} & name=='{target_state_name}' & time<={source_time + time_per_step}"
+                    last_transition_time = place_change_events.query(query)['time'].min()
+            return Occasion(target_unit, target_state_name, last_transition_time)
+
         # Determine local input node from same unit
         state_name = trans.name[0]  # ab -> a
-        query = f"num=={trans.unit} & name=='{state_name}' & time<{trans.time}"
-        last_transition_time = place_change_events.query(query)['time'].max()
-        local_input_occasion = Occasion(trans.unit, state_name, last_transition_time)
+        local_input_occasion = choose_best_upstream_occasion(trans.unit, state_name, trans.time)
 
         # Determine input node from neighbour
         state_name = trans.name[1]  # ab -> b
-        query = f"num=={trans.neighbour} & name=='{state_name}' & time<{trans.time}"
-        last_transition_time = place_change_events.query(query)['time'].max()
-        neighbour_input_occasion = Occasion(trans.neighbour, state_name, last_transition_time)
+        neighbour_input_occasion = choose_best_upstream_occasion(trans.neighbour, state_name, trans.time)
 
         # Add the two edges or _prehensions_
         g.add_edge(local_input_occasion, output_occasion)
         g.add_edge(neighbour_input_occasion, output_occasion)
 
     return g
+
+
+    # def determine_earliest_unused_transition
 
 
 NOAXIS = dict(

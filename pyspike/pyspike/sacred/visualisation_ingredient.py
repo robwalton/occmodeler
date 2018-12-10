@@ -9,6 +9,7 @@ import pyspike.network
 from pathlib import Path
 import plotly.offline as py
 
+from pyspike import tidydata
 
 visualisation_ingredient = Ingredient('visualisation')
 
@@ -27,7 +28,7 @@ def visualise_temporal_graph(places_path: Path, transitions_path: Path, medium_g
 
     places = pyspike.read_csv(filename=str(places_path), node_type="place", drop_non_coloured_sums=True)
     transitions = pyspike.read_csv(filename=str(transitions_path), node_type="transition", drop_non_coloured_sums=True)
-
+    _, _, tstep = tidydata.determine_time_range_of_data_frame(places)
     places = pyspike.tidydata.prepend_tidy_frame_with_tstep(places)
     transitions = pyspike.tidydata.prepend_tidy_frame_with_tstep(transitions)
 
@@ -35,7 +36,7 @@ def visualise_temporal_graph(places_path: Path, transitions_path: Path, medium_g
     transition_events = pyspike.temporal.generate_transition_events(transitions)
 
     causal_graph = pyspike.temporal.generate_causal_graph(
-        place_change_events, transition_events)
+        place_change_events, transition_events, time_per_step=tstep)
 
     medium_graph = nx.read_gml(str(medium_gml_path), destringizer=int)
 
