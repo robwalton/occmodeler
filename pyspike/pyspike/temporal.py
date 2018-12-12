@@ -64,6 +64,9 @@ def generate_causal_graph(place_change_events: DataFrame,
 
         # Create new occasion in graph for this transition
         output_state = trans.name[1]  # ab -> b
+        if math.isnan(trans.unit):
+            print(f"*** {trans.unit} {output_state} {trans.time}")
+            continue
         output_occasion = Occasion(int(trans.unit), output_state, trans.time)
         g.add_node(output_occasion)
 
