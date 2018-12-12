@@ -9,6 +9,8 @@ from pyspike import tidydata
 from pyspike.util import render_name
 
 
+OPACITY = 0.5
+
 def render_plot(medium_edge_trace, initial_node_traces, frames=[], tstep_for_each_frame=[], slider_step_list=[], run_id=None): #edge_trace_list, medium_edge_trace, node_trace_list):
 
     sliders_dict = {
@@ -118,11 +120,13 @@ def _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_
                 hoverinfo='text',
                 text=ntext,
                 marker=dict(
-                    # sizeref=0.001,  # TODO: change based on max value in series
+                    sizeref=0.1,  # TODO: change based on max value in series
                     sizemode='area',
-                    # size=nsize,
                     size=nsize,
-                    color=color_dict[state_name],
+                    color=color_dict[state_name],  # opacity included here already
+                    line=dict(color='#888')
+                    # opacity=0.3
+
                 )
             )
             data.append(trace_data)
@@ -149,7 +153,7 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
 
     # start_time = time.time()
     state_name_list = list(places.name.unique())
-    ordered_state_list, color_dict = pyspike.util.generate_state_order_and_colours(state_name_list)
+    ordered_state_list, color_dict = pyspike.util.generate_state_order_and_colours(state_name_list, OPACITY)
 
     # Create initial edge trace to show layout
     if not medium_layout:

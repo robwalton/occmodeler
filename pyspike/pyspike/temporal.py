@@ -12,7 +12,7 @@ from pandas import DataFrame
 import plotly.graph_objs as go
 
 import pyspike
-from pyspike.util import render_name
+from pyspike.util import render_name, check_medium_graph
 
 
 def generate_place_change_events(df):
@@ -42,7 +42,7 @@ def generate_transition_events(df):
 class Occasion(namedtuple('Occasion', ['unit', 'state', 'time'])):
 
     def __repr__(self):
-        return f"{self.state}{self.unit}@{self.time}"
+        return f"{self.state}{int(self.unit)}@{self.time}"
 
 
 def generate_causal_graph(place_change_events: DataFrame,
@@ -83,14 +83,18 @@ def generate_causal_graph(place_change_events: DataFrame,
         # Determine local input node from same unit
         state_name = trans.name[0]  # ab -> a
         local_input_occasion = choose_best_upstream_occasion(trans.unit, state_name, trans.time)
+        g.add_edge(local_input_occasion, output_occasion)
 
         # Determine input node from neighbour
         state_name = trans.name[1]  # ab -> b
         neighbour_input_occasion = choose_best_upstream_occasion(trans.neighbour, state_name, trans.time)
-
-        # Add the two edges or _prehensions_
-        g.add_edge(local_input_occasion, output_occasion)
         g.add_edge(neighbour_input_occasion, output_occasion)
+
+        # Determine input node from neighbour2 if set
+        if not math.isnan(trans.neighbour2):
+            state_name = trans.name[1]  # ab -> b  # neighbour2 assumed pulling state forward (like neighbour)
+            neighbour2_input_occasion = choose_best_upstream_occasion(trans.neighbour2, state_name, trans.time)
+            g.add_edge(neighbour2_input_occasion, output_occasion)
 
     return g
 
@@ -130,7 +134,7 @@ def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None,
         else:
             medium_layout = nx.spring_layout(medium_graph, dim=2)
 
-
+    check_medium_graph(medium_graph)
 
     # Create initial edge trace to show layout
     medium_edge_trace = _generate_medium_edge_trace(
@@ -197,6 +201,8 @@ def generate_occasion_trace(occasion_list, color, medium_layout, t_to_z):
     state_name = occasion_list[0].state
     # print(f"{state_name} occasions are colour {color}")
     for occ in occasion_list:
+        if occ.unit not in medium_layout:
+            print('BREAKPONT HERE')
         x, y = medium_layout[occ.unit]
         nx_.append(x)
         ny.append(y)

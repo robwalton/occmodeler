@@ -13,6 +13,7 @@ from pyspike.temporal import generate_place_change_events, generate_transition_e
 
 PLOT = True
 
+import tests.files
 from tests.files import TRANSITIONS, PLACES
 
 
@@ -87,45 +88,35 @@ def test_generate_causal_graph_with_run_77():
         nx.draw(causal_graph, with_labels=True)
         plt.show()
     log('actual:', causal_graph.nodes)
+
     O = Occasion
     desired = [
         O(0, 'a', 0.0), O(1, 'a', 0.0), O(2, 'a', 0.0), O(3, 'a', 0.0), O(4, 'a', 0.0), O(5, 'a', 0.0),
         O(5, 'b', 2.0), O(0, 'b', 1.1), O(4, 'b', 3.0), O(3, 'b', 4.0), O(2, 'b', 5.1), O(1, 'b', 6.1)
     ]
-    log('desired:', desired)
+
     assert list(causal_graph.nodes) == desired
+    assert str(list(causal_graph.edges)) == "[(a1@0.0, b1@6.1), (a2@0.0, b2@5.1), (a3@0.0, b3@4.0), (a4@0.0, b4@3.0), (a5@0.0, b5@2.0), (b5@2.0, b4@3.0), (b0@1.1, b5@2.0), (b4@3.0, b3@4.0), (b3@4.0, b2@5.1), (b2@5.1, b1@6.1)]"
 
 
-    edge_tuples = list(causal_graph.edges)
+def occ_pair(a, b):
+    # s of form a1@0.0
+    astate, aunit, atime = a[0], a[1], a[-3:]
+    bstate, bunit, btime = b[0], b[1], b[-3:]
+    return Occasion(aunit, astate, atime), Occasion(bunit, bstate, btime)
 
 
-    def occ_pair(a, b):
-        # s of form a1@0.0
-        astate, aunit, atime = a[0], a[1], a[-3:]
-        bstate, bunit, btime = b[0], b[1], b[-3:]
-        return (Occasion(aunit, astate, atime), Occasion(bunit, bstate, btime))
+def test_generate_causal_graph_with__are_both_neighbours__run_90_():
+    graph_medium, place_change_events, transition_events = _load_run_90()
+    log([transition_events])
+    causal_graph = generate_causal_graph(
+        place_change_events, transition_events, 0.1)
 
-    desired_edge_tuples = [
-        occ_pair('a1@0.0', 'b1@6.1'),
-        occ_pair('a2@0.0', 'b2@5.1'),
-        occ_pair('a3@0.0', 'b3@4.0'),
-        occ_pair('a4@0.0', 'b4@3.0'),
-        occ_pair('a5@0.0', 'b5@2.0'),
-        occ_pair('b0@1.1', 'b5@2.0'),
-        occ_pair('b5@2.0', 'b4@3.0'),
-        occ_pair('b4@3.0', 'b3@4.0'),
-        occ_pair('b3@4.0', 'b2@5.1'),
-        occ_pair('b2@5.1', 'b1@6.1')]
-
-    assert len(edge_tuples) == len(desired_edge_tuples)
-
-    # for desired_edge_tuple in desired_edge_tuples:
-    #     assert desired_edge_tuple in edge_tuples
-
-
-
-    log('edgess', edge_tuples)
-    # TODO: check edges!
+    if PLOT:
+        nx.draw(causal_graph, with_labels=True)
+        plt.show()
+    assert str(causal_graph.nodes) == '[a2@0.0, a3@0.0, a4@0.0, b0@0.0, b1@0.0, b2@1.5, b3@2.5, b4@3.5]'
+    log('actual edges:', causal_graph.edges)
 
 
 class TestCausalPlotting(object):
@@ -152,14 +143,16 @@ class TestCausalPlotting(object):
         assert temporal.extract_unit_numbers_from_causal_graph(causal_graph) == set(range(6))
 
     def test_with_run_71(self):
-        # TODO: remove external dependencies
-        run_number = 71
+
         places = read_csv(
-            filename=f"/Users/walton/dphil/proof-of-concept/runs/{run_number}/places.csv",
+            filename=tests.files.RUN_71_PLACES,
             node_type="place", drop_non_coloured_sums=True)
         transitions = read_csv(
-            filename=f"/Users/walton/dphil/proof-of-concept/runs/{run_number}/transitions.csv",
+            filename=tests.files.RUN_71_TRANSITIONS,
             node_type="transition", drop_non_coloured_sums=True)
+        graph_medium = nx.read_gml(
+            tests.files.RUN_71_NETWORK_GML,
+            destringizer=int)
 
         places = tidydata.prepend_tidy_frame_with_tstep(places)
         transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
@@ -169,17 +162,31 @@ class TestCausalPlotting(object):
 
         causal_graph = generate_causal_graph(
             place_change_events, transition_events, 0.1)
-        graph_medium = nx.read_gml(
-                "/Users/walton/dphil/proof-of-concept/model/social/notebook/2018-11-22/1.gml",
-                destringizer=int)
 
         fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium)
         if PLOT:
             url = py.plot(fig)
+            print(url)
+
+    def test_with_run_90(self):
+        graph_medium, place_change_events, transition_events = _load_run_90()
+        causal_graph = generate_causal_graph(
+            place_change_events, transition_events, 0.1)
+        fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium)
+        if PLOT:
+            url = py.plot(fig)
+            print(url)
 
 
-
-
+def _load_run_90():
+    graph_medium = nx.read_gml(tests.files.RUN_90_GML, destringizer=int)
+    places = read_csv(tests.files.RUN_90_PLACES, 'place', drop_non_coloured_sums=True)
+    places = tidydata.prepend_tidy_frame_with_tstep(places)
+    place_change_events = generate_place_change_events(places)
+    transitions = read_csv(tests.files.RUN_90_TRANSITIONS, 'transition', drop_non_coloured_sums=True)
+    transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
+    transition_events = generate_transition_events(transitions)
+    return graph_medium, place_change_events, transition_events
 
 
 def _load_run_77():

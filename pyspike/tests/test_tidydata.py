@@ -1,8 +1,21 @@
 import pandas as pd
 import pytest
+import re
+
+
 from pyspike import tidydata
 
 from pandas.util.testing import assert_frame_equal
+
+import tests.files
+from pyspike.tidydata import TRANSITION_COL_RE
+
+
+def log(*thing_list):
+    print('---')
+    for thing in thing_list:
+        print(thing)
+    print('---')
 
 
 @pytest.fixture
@@ -53,18 +66,6 @@ def test_prepend_tidy_frame_with_tstep():
     assert_frame_equal(actual, desired)
 
 
-
-def test_tidy_transitions():
-    raw_columns = ['Time', 'a_1_10', 'a_2_20', 'b_3_20']
-    raw_frame = pd.DataFrame(
-        data={raw_columns[i]: [i] for i in range(len(raw_columns))},
-        columns=raw_columns,
-    )
-    frame = tidydata.tidy_frame(raw_frame, 'transition')
-    log(frame)
-    assert list(frame.columns) == ['time', 'type', 'name', 'unit', 'neighbour', 'count']
-
-
 def test_tidy_with_underscore_name():
 
     input_frame = pd.DataFrame(
@@ -86,16 +87,59 @@ def test_filter_by_name_with_all_names(tidy_frame):
     assert_frame_equal(frame, tidy_frame)
 
 
-def test_determine_time_range_of_data_frame(big_example_frame):
-    start, stop, step = tidydata.determine_time_range_of_data_frame(big_example_frame)
-    assert start == 0
-    assert stop == 4
-    assert step == 1
+class TestTransitionReString:
+
+    # NOTE: This regex stuff is getting out of had. Pandas may well let use s function for this instead of a regex.
+
+    def never_worked__test_with__state(self):
+        m = re.match(TRANSITION_COL_RE, 'a')
+        assert m.groupdict() == {}
+
+    def never_worked__test_with__state_unit(self):
+        m = re.match(TRANSITION_COL_RE, 'a_1')
+        assert m.groupdict() == {}
+
+    def test_with__state_neighbour_unit(self):
+        m = re.match(TRANSITION_COL_RE, 'a_1_2')
+        assert m.groupdict() == {'name': 'a', 'neighbour': '1', 'neighbour2': None, 'unit': '2'}
+        m = re.match(TRANSITION_COL_RE, 'a_12_34')
+        assert m.groupdict() == {'name': 'a', 'neighbour': '12', 'neighbour2': None, 'unit': '34'}
+        # assert m.groupdict() == {'name': 'a', 'neighbour': '1', 'unit': '2'}
+
+
+    def test_with__state_neighbour_neighbour2_unit(self):
+        m = re.match(TRANSITION_COL_RE, 'a_1_2_3')
+        assert m.groupdict() == {'name': 'a', 'neighbour': '1', 'neighbour2': '2', 'unit': '3'}
+
+
+class TestLoadTransitions:
+
+    def test_with__is_neighbour_func_used(self):
+        raw_columns = ['Time', 'a_1_10', 'a_2_20', 'b_3_20']
+        raw_frame = pd.DataFrame(
+            data={raw_columns[i]: [i] for i in range(len(raw_columns))},
+            columns=raw_columns,
+        )
+        frame = tidydata.tidy_frame(raw_frame, 'transition')
+        log(frame)
+        assert list(frame.columns) == ['time', 'type', 'name', 'unit', 'neighbour', 'neighbour2', 'count']
+
+    def test_with_are_both_neighbours__func_used(self):
+        transitions = tidydata.read_csv(tests.files.RUN_90_TRANSITIONS, 'transition')
+        log([transitions])
+
+
+if __name__ == '__main__':
+    raw_frame = pd.read_csv(tests.files.RUN_90_TRANSITIONS, delimiter=';')
+    frame = tidydata.tidy_frame(raw_frame, 'transition')
 
 
 
-def log(*thing_list):
-    print('---')
-    for thing in thing_list:
-        print(thing)
-    print('---')
+# def test_determine_time_range_of_data_frame(big_example_frame):
+#     start, stop, step = tidydata.determine_time_range_of_data_frame(big_example_frame)
+#     assert start == 0
+#     assert stop == 4
+#     assert step == 1
+
+
+

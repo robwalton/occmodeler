@@ -12,7 +12,7 @@ candl_ingredient = Ingredient('candl')
 @candl_ingredient.config
 def candl_config():
     candl_template_path = ''
-    gml_path = 'blank.gml'
+    gml_path = ''
 
 
 @candl_ingredient.capture
