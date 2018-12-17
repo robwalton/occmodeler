@@ -57,18 +57,18 @@ def main(ex, candl, spike, visualisation, log, run_id):
     _add_artifacts(ex, artifact_path_list, log)  # Can this be done earlier?
 
     # Visualise
-    if visualisation['enable']:
-        places_path = Path('_spike/output/places.csv')
-        transitions_path = Path('_spike/output/transitions.csv')
 
-        # Check ingredients are all configured appropriately
-        assert str(places_path) in artifact_path_list
-        assert str(transitions_path) in artifact_path_list
-        gml_path = visualisation['medium_gml_path']
-        assert gml_path
-        plot_path_list = _show_plots(gml_path, places_path, transitions_path,
-                                     spike['sim_args']['runs'], log, run_id, visualisation['jupyter_inline'])
-        _add_artifacts(ex, plot_path_list, log)
+    places_path = Path('_spike/output/places.csv')
+    transitions_path = Path('_spike/output/transitions.csv')
+
+    # Check ingredients are all configured appropriately
+    assert str(places_path) in artifact_path_list
+    assert str(transitions_path) in artifact_path_list
+    gml_path = visualisation['medium_gml_path']
+    assert gml_path
+    plot_path_list = _show_plots(gml_path, places_path, transitions_path,
+                                 spike['sim_args']['runs'], log, run_id)
+    _add_artifacts(ex, plot_path_list, log)
 
     # Wrap up
     log.info('Run ID: ' + str(run_id))
@@ -101,11 +101,11 @@ def visualise(candl, spike, _log, run_num=None):
         places_path = runs / 'places.csv'
         transitions_path = runs / 'transitions.csv'
     num_runs = 1  # TODO: should read from config!
-    _show_plots(candl['gml_path'], places_path, transitions_path, num_runs, _log, run_num, jupyter_inline=False)
+    _show_plots(candl['gml_path'], places_path, transitions_path, num_runs, _log, run_num)
 
 
-def _show_plots(gml_path, places_path, transitions_path, num_runs, log, run_id, jupyter_inline=False):
-
+def _show_plots(gml_path, places_path, transitions_path, num_runs, log, run_id):
+    jupyter_inline = False
     plot_func = pl.iplot if jupyter_inline else pl.plot
 
     plot_path_list = []
@@ -113,7 +113,7 @@ def _show_plots(gml_path, places_path, transitions_path, num_runs, log, run_id, 
     if num_runs == 1:
         log.info('* Visualising temporal network *')
         fig = visualise_temporal_graph(
-            places_path, transitions_path, Path(gml_path), enable=True, run_id=run_id)
+            places_path, transitions_path, Path(gml_path), run_id=run_id)
         plot_url = plot_func(fig, filename='causal_graph.html')
         plot_path = urllib.parse.urlparse(plot_url).path
         log.info(f'Causal graph: {plot_path}')
@@ -123,7 +123,7 @@ def _show_plots(gml_path, places_path, transitions_path, num_runs, log, run_id, 
 
     log.info('* Visualising network animation with slider *')
     fig = visualise_network_animation(
-        places_path, Path(gml_path), enable=True, run_id=run_id)
+        places_path, Path(gml_path), num_runs, run_id=run_id)
     plot_url = plot_func(fig, filename='network_animation_with_slider.html')
     plot_path = urllib.parse.urlparse(plot_url).path
     log.info(f'Animation: {plot_path}')

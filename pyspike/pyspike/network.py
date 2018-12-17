@@ -91,10 +91,12 @@ def _generate_medium_edge_trace(medium_graph, medium_layout):
     )
 
 
-def _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_state_list, color_dict, diff_only=False):
+def _generate_plotly_node_data_trace_list(
+        places, medium_layout, tstep, ordered_state_list, color_dict, diff_only=False, num_runs=1):
 
     number_nodes = len(medium_layout)
     data = []
+    sizeref = 1 if num_runs == 1 else (number_nodes / 100)
 
     if not diff_only:
         # Add each trace to data list
@@ -120,7 +122,7 @@ def _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_
                 hoverinfo='text',
                 text=ntext,
                 marker=dict(
-                    sizeref=0.1,  # TODO: change based on max value in series
+                    sizeref=sizeref,  # TODO: change based on max value in series
                     sizemode='area',
                     size=nsize,
                     color=color_dict[state_name],  # opacity included here already
@@ -147,7 +149,7 @@ def _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_
     return data
 
 
-def generate_network_animation_figure_with_slider(places, medium_graph, medium_layout=None, run_id=None):
+def generate_network_animation_figure_with_slider(places, medium_graph, medium_layout=None, run_id=None, num_runs=1):
 
 
 
@@ -167,7 +169,7 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
         medium_graph, medium_layout)
 
     initial_node_traces = _generate_plotly_node_data_trace_list(
-        places, medium_layout, 0, ordered_state_list, color_dict, diff_only=False)
+        places, medium_layout, 0, ordered_state_list, color_dict, diff_only=False, num_runs=num_runs)
 
     tstep_list = places.tstep.unique()
     t_list = places['time'].unique()
@@ -181,7 +183,7 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
     places.sort_values('num', inplace=True)
     for tstep, t in zip(tstep_list, t_list):
         frame_data = _generate_plotly_node_data_trace_list(
-            places, medium_layout, tstep, ordered_state_list, color_dict, diff_only=True)
+            places, medium_layout, tstep, ordered_state_list, color_dict, diff_only=True, num_runs=num_runs)
         num_traces = len(ordered_state_list)
         assert len(frame_data) == num_traces
         frames.append(

@@ -17,7 +17,7 @@ from pyspike.sacred.visualisation_ingredient import visualisation_ingredient
 
 def run_experiment(unit_model: UnitModel, medium_graph: nx.Graph = None, medium_gml=None, graph_name=None,
                    start=0, stop=10, step=.1, runs=1,
-                   archive=False, calling_file: Path = None, file_storage_observer=False):
+                   calling_file: Path = None, file_storage_observer=False):
 
     """Trigger an experiment in a way that could be done from the bash shell in order
     to ensure repeatability.
@@ -46,7 +46,7 @@ def run_experiment(unit_model: UnitModel, medium_graph: nx.Graph = None, medium_
 
     candl_args = dict(candl_template_path='', gml_path='')  # Not using this part so null  out
     spike_args = dict(model_path=candl_path, sim_args=dict(interval=dict(start=start, step=step, stop=stop), runs=runs))
-    visualisation_args = dict(enable=True, jupyter_inline=False, medium_gml_path=str(medium_gml))
+    visualisation_args = dict(medium_gml_path=str(medium_gml))
 
     # logger = logging.getLogger('my_custom_logger')
     # logger.setLevel(logging.CRITICAL)
