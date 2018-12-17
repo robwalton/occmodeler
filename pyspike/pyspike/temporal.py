@@ -1,5 +1,6 @@
 import math
 from collections import namedtuple, defaultdict
+from enum import Enum
 
 import networkx as nx
 import pandas as pd
@@ -118,8 +119,14 @@ NOAXIS = dict(
 
 # NOAXIS = {}
 
+class Style(Enum):
+    ORIG = 1
+    SOFT = 2
+    FOUNTAIN = 3
 
-def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None, show_local_prehensions=True, z_scale=.2, run_id=None):
+
+def generate_causal_graph_figure(
+        causal_graph, medium_graph, medium_layout=None, z_scale=.2, run_id=None, style=Style.ORIG):
     # TODO: the z scale has no effect as plotly autofits entire structure
     # TODO: switch time to x axis?
     # determine state names and colours
@@ -170,10 +177,11 @@ def generate_causal_graph_figure(causal_graph, medium_graph, medium_layout=None,
             # print(f"{occ} edges: {edge_list}")
 
         edge_trace_list.append(
-            generate_edge_trace(local_output_edge_list, color, medium_layout, t_to_z, state_name, dash='dot')
+            generate_edge_trace(
+                local_output_edge_list, color, medium_layout, t_to_z, state_name, dash='dot', style=style)
         )
         edge_trace_list.append(
-            generate_edge_trace(neighbour_output_edge_list, color, medium_layout, t_to_z, state_name)
+            generate_edge_trace(neighbour_output_edge_list, color, medium_layout, t_to_z, state_name, style=style)
         )
     fig = render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id)
     return fig
@@ -228,7 +236,7 @@ def generate_occasion_trace(occasion_list, color, medium_layout, t_to_z):
     )
 
 
-def generate_edge_trace(output_edge_list, color, medium_layout, t_to_z, state_name, dash=None):
+def generate_edge_trace(output_edge_list, color, medium_layout, t_to_z, state_name, dash=None, style=Style.ORIG):
     edge_x = []
     edge_y = []
     edge_z = []
@@ -243,9 +251,20 @@ def generate_edge_trace(output_edge_list, color, medium_layout, t_to_z, state_na
         end = (xy_end[0], xy_end[1], z_end)
 
         P0 = start
-        P1 = [end[0], end[1], start[2]]
-        P2 = P1
+
+        if style == Style.ORIG:
+            P1 = [end[0], end[1], start[2]]
+            P2 = P1
+        elif style == Style.SOFT:
+            P1 = [start[0], start[1], end[2]]
+            P2 = [end[0], end[1], start[2]]
+        elif style == Style.FOUNTAIN:
+            P1 = [start[0], start[1], end[2]]
+            P2 = P1
+        else:
+            assert False
         P3 = end
+
         x, y, z = bezier_3d(P0, P1, P2, P3)
         edge_x += [None] + list(x)
         edge_y += [None] + list(y)

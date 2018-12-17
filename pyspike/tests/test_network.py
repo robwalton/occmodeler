@@ -1,7 +1,8 @@
 import networkx as nx
 import plotly.offline as py
 
-from pyspike import read_csv, tidydata
+from pyspike.tidydata import read_csv
+from pyspike import tidydata
 from pyspike.network import generate_network_animation_figure_with_slider
 from tests.files import RUN_71_PLACES, RUN_71_TRANSITIONS, RUN_71_NETWORK_GML, MONTE_CARLO_TOS_10000
 

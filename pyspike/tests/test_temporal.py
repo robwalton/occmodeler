@@ -5,11 +5,12 @@ from pandas.util.testing import assert_frame_equal
 import matplotlib.pyplot as plt
 import plotly.offline as py
 
-from pyspike import temporal, read_csv, tidydata
+from pyspike import temporal, tidydata
 
 import os
 
-from pyspike.temporal import generate_place_change_events, generate_transition_events, generate_causal_graph, Occasion
+from pyspike.temporal import generate_place_change_events, generate_transition_events, generate_causal_graph, Occasion, \
+    Style
 
 PLOT = True
 
@@ -144,10 +145,10 @@ class TestCausalPlotting(object):
 
     def test_with_run_71(self):
 
-        places = read_csv(
+        places = tidydata.read_csv(
             filename=tests.files.RUN_71_PLACES,
             node_type="place", drop_non_coloured_sums=True)
-        transitions = read_csv(
+        transitions = tidydata.read_csv(
             filename=tests.files.RUN_71_TRANSITIONS,
             node_type="transition", drop_non_coloured_sums=True)
         graph_medium = nx.read_gml(
@@ -163,7 +164,7 @@ class TestCausalPlotting(object):
         causal_graph = generate_causal_graph(
             place_change_events, transition_events, 0.1)
 
-        fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium)
+        fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium, style=Style.ORIG)
         if PLOT:
             url = py.plot(fig)
             print(url)
@@ -180,10 +181,10 @@ class TestCausalPlotting(object):
 
 def _load_run_90():
     graph_medium = nx.read_gml(tests.files.RUN_90_GML, destringizer=int)
-    places = read_csv(tests.files.RUN_90_PLACES, 'place', drop_non_coloured_sums=True)
+    places = tidydata.read_csv(tests.files.RUN_90_PLACES, 'place', drop_non_coloured_sums=True)
     places = tidydata.prepend_tidy_frame_with_tstep(places)
     place_change_events = generate_place_change_events(places)
-    transitions = read_csv(tests.files.RUN_90_TRANSITIONS, 'transition', drop_non_coloured_sums=True)
+    transitions = tidydata.read_csv(tests.files.RUN_90_TRANSITIONS, 'transition', drop_non_coloured_sums=True)
     transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
     transition_events = generate_transition_events(transitions)
     return graph_medium, place_change_events, transition_events
@@ -191,10 +192,10 @@ def _load_run_90():
 
 def _load_run_77():
     graph_medium = _gen_loop_graph(6)
-    places = read_csv(PLACES, 'place', drop_non_coloured_sums=True)
+    places = tidydata.read_csv(PLACES, 'place', drop_non_coloured_sums=True)
     places = tidydata.prepend_tidy_frame_with_tstep(places)
     place_change_events = generate_place_change_events(places)
-    transitions = read_csv(TRANSITIONS, 'transition', drop_non_coloured_sums=True)
+    transitions = tidydata.read_csv(TRANSITIONS, 'transition', drop_non_coloured_sums=True)
     transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
     transition_events = generate_transition_events(transitions)
     return graph_medium, place_change_events, transition_events

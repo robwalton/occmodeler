@@ -5,10 +5,10 @@ colorsets:
 
 variables:
   Unit : u;
-  Unit : n;
+  Unit : n1;
 
 colorfunctions:
-bool  is_neighbour(Unit u,Unit n) {$FUNC$};
+bool  is_neighbour(Unit u,Unit n1) {$IS_NEIGHBOUR_FUNC$};
 
 places:
 discrete:
@@ -29,20 +29,20 @@ transitions:
     : MassAction(1)
     ;
   bc
- {[is_neighbour(u, n)]}
-    : [c >= {n}]
+ {[is_neighbour(u, n1)]}
+    : [c >= {n1}]
     : [c + {u}] & [b - {u}]
     : MassAction(1)
     ;
   ab
- {[is_neighbour(u, n)]}
-    : [b >= {n}]
+ {[is_neighbour(u, n1)]}
+    : [b >= {n1}]
     : [b + {u}] & [a - {u}]
     : MassAction(1)
     ;
   bC
- {[is_neighbour(u, n)]}
-    : [C >= {n}]
+ {[is_neighbour(u, n1)]}
+    : [C >= {n1}]
     : [C + {u}] & [b - {u}]
     : MassAction(1)
     ;
@@ -52,14 +52,14 @@ transitions:
     : MassAction(1)
     ;
   cC
- {[is_neighbour(u, n)]}
-    : [C >= {n}]
+ {[is_neighbour(u, n1)]}
+    : [C >= {n1}]
     : [C + {u}] & [c - {u}]
     : MassAction(1)
     ;
   Cc
- {[is_neighbour(u, n)]}
-    : [c >= {n}]
+ {[is_neighbour(u, n1)]}
+    : [c >= {n1}]
     : [c + {u}] & [C - {u}]
     : MassAction(1)
     ;
