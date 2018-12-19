@@ -8,6 +8,8 @@ import numpy as np
 import colorlover as cl
 
 
+import pyspike.model
+expand_transition_name = pyspike.model.Transition.expand_name  # TODO: hmm
 
 from pandas import DataFrame
 import plotly.graph_objs as go
@@ -64,7 +66,8 @@ def generate_causal_graph(place_change_events: DataFrame,
         # assert trans.count == 1  # Statistically likely to happen as simulations get more complex or are undersampled. Consider what to do if this occurs --Rob
 
         # Create new occasion in graph for this transition
-        output_state = trans.name[1]  # ab -> b
+        # output_state = trans.name[1]  # ab -> b
+        prefix, input_state, output_state = expand_transition_name(trans.name)  # strings
         if math.isnan(trans.unit):
             print(f"*** {trans.unit} {output_state} {trans.time}")
             continue
@@ -85,19 +88,19 @@ def generate_causal_graph(place_change_events: DataFrame,
             return Occasion(target_unit, target_state_name, last_transition_time)
 
         # Determine local input node from same unit
-        state_name = trans.name[0]  # ab -> a
-        local_input_occasion = choose_best_upstream_occasion(trans.unit, state_name, trans.time)
+        # state_name = trans.name[0]  # ab -> a
+        local_input_occasion = choose_best_upstream_occasion(trans.unit, input_state, trans.time)
         g.add_edge(local_input_occasion, output_occasion)
 
         # Determine input node from neighbour
-        state_name = trans.name[1]  # ab -> b
-        neighbour_input_occasion = choose_best_upstream_occasion(trans.neighbour, state_name, trans.time)
+        # state_name = trans.name[1]  # ab -> b
+        neighbour_input_occasion = choose_best_upstream_occasion(trans.neighbour, output_state, trans.time)
         g.add_edge(neighbour_input_occasion, output_occasion)
 
         # Determine input node from neighbour2 if set
         if not math.isnan(trans.neighbour2):
-            state_name = trans.name[1]  # ab -> b  # neighbour2 assumed pulling state forward (like neighbour)
-            neighbour2_input_occasion = choose_best_upstream_occasion(trans.neighbour2, state_name, trans.time)
+            # state_name = trans.name[1]  # ab -> b  # neighbour2 assumed pulling state forward (like neighbour)
+            neighbour2_input_occasion = choose_best_upstream_occasion(trans.neighbour2, output_state, trans.time)
             g.add_edge(neighbour2_input_occasion, output_occasion)
 
     return g
@@ -106,18 +109,18 @@ def generate_causal_graph(place_change_events: DataFrame,
     # def determine_earliest_unused_transition
 
 
-NOAXIS = dict(
-    title='',
-    autorange=True,
-    showgrid=False,
-    zeroline=False,
-    showline=False,
-    ticks='',
-    showticklabels=False,
-    showspikes=False
-)
+#NOAXIS = dict(
+#     title='',
+#     autorange=True,
+#     showgrid=False,
+#     zeroline=False,
+#     showline=False,
+#     ticks='',
+#     showticklabels=False,
+#     showspikes=False
+# )
 
-# NOAXIS = {}
+NOAXIS = {}
 
 class Style(Enum):
     ORIG = 1

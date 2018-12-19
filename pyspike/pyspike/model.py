@@ -90,19 +90,27 @@ class Place:
         return f'  {self.color.name} {self.name} = {self.initial_marking};'
 
 
-class Transition:
+class Transition(ABC):
 
     class Kind(Enum):
         STOCHASTIC = 1
         DETERMINISTIC = 2
 
     def __init__(self, source: Place, target: Place,
-                 kind: Kind, name: str, guard_function: ColorFunction = None):
-        self.name = name
+                 kind: Kind, transition_type_name: str, guard_function: ColorFunction = None, name_prefix=''):
+
+        self.transition_type_name = transition_type_name
         self.source = source
         self.target = target
         self._kind = kind
         self.guard_function = guard_function
+        self.name_prefix = name_prefix
+        self. _validate_name_prefix()
+
+    def _validate_name_prefix(self):
+        # TODO: check only numbers and letters and no number st start (candl definition)
+        if '_' in self.name_prefix:
+            raise ValueError(f"Only number")
 
     def is_stochastic(self):
         return self._kind == Transition.Kind.STOCHASTIC
@@ -110,53 +118,69 @@ class Transition:
     def is_deterministic(self):
         return self._kind == Transition.Kind.DETERMINISTIC
 
+    @property
+    def name(self):
+        return f"{self.name_prefix}{self.source.name}{self.target.name}"
+
+    @staticmethod
+    def expand_name(name):
+        prefix = name[:-2]
+        source = name[-2]
+        target = name[-1]
+        return prefix, source, target
+
+    @abstractmethod
     def to_candl(self):
-        return ''
+        pass
 
 
 class FollowNeighbour(Transition):
 
-    def __init__(self, source: Place, target: Place):
+    def __init__(self, source: Place, target: Place, rate: str = '1', name_prefix=''):
         super().__init__(source, target,
-                         Transition.Kind.STOCHASTIC, "follow_neighbour", IsNeighbour())
+                         Transition.Kind.STOCHASTIC, "follow_neighbour", IsNeighbour(),
+                         name_prefix=name_prefix + 'f1')
         assert set(self.guard_function.variables) == {u, n1}
+        self.rate = str(rate)
 
     def to_candl(self):
         s = self.source.name
         t = self.target.name
         return f"""\
-  {s}{t}
+  {self.name}
  {{[is_neighbour(u, n1)]}}
     : [{t} >= {{{n1.name}}}]
     : [{t} + {{{u.name}}}] & [{s} - {{{u.name}}}]
-    : MassAction(1)
+    : {self.rate}
     ;"""
 
 
 class FollowTwoNeighbours(Transition):
 
-    def __init__(self, source: Place, target: Place):
+    def __init__(self, source: Place, target: Place, rate: str = '1', name_prefix=''):
         super().__init__(source, target,
-                         Transition.Kind.STOCHASTIC, "follow_two_neighbours", AreBothNeighbours())
+                         Transition.Kind.STOCHASTIC, "follow_two_neighbours", AreBothNeighbours(),
+                         name_prefix=name_prefix + 'f2')
         assert set(self.guard_function.variables) == {u, n1, n2}
+        self.rate = rate
 
     def to_candl(self):
         s = self.source.name
         t = self.target.name
         return f'''\
-  {s}{t}
+  {self.name}
  {{[are_both_neighbours(u, n1, n2)]}}
     : [{t} >= {{n1++n2}}]
     : [{t} + {{u}}] & [{s} - {{u}}]
-    : MassAction(1)
+    : {self.rate}
     ;'''
 
 
 class External(Transition):
 
-    def __init__(self, source: Place, target: Place, delay_time: float, unit_list):
+    def __init__(self, source: Place, target: Place, delay_time: float, unit_list, name_prefix=''):
         super().__init__(source, target,
-                         Transition.Kind.DETERMINISTIC, "external_message")
+                         Transition.Kind.DETERMINISTIC, "external_message", name_prefix=name_prefix + 'ext')
         self.unit_list = unit_list
         self.delay_time = float(delay_time)
 
@@ -165,7 +189,7 @@ class External(Transition):
         t = self.target.name
         markings = '++'.join((str(i) for i in self.unit_list))
         return f"""\
-  ext{s}{t}
+  {self.name}
     :
     : [{t} + {{{markings}}}] & [{s} - {{{markings}}}]
     : {self.delay_time}
@@ -213,6 +237,8 @@ class UnitModel:
             self.add_place(t.target)
         if (t.guard_function is not None) and (t.guard_function not in self.functions):
             self._add_function(t.guard_function)
+        if t.name in [tt.name for tt in self.transitions]:
+            raise ValueError(f"There is already a transition names '{t.name}'")
         self.transitions.append(t)
 
     def to_candl_string(self, graph_medium: nx.Graph, graph_name='') -> str:

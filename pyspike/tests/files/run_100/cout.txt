@@ -1,0 +1,68 @@
+INFO - Spike run - Running command 'main'
+INFO - Spike run - Started run with ID "100"
+INFO - main - Resource: /var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpskz5f13r/Last-registered-both-single-and-two-neighbours-on-tos-network.candl
+INFO - main - Resource: _spike/input/conf.spc
+INFO - spike.call_spike - Calling: ['~/bin/spike exe -f _spike/input/conf.spc']
+
+CLI parsed successfully
+Error! Expecting 
+file parsed successfully
+ImportCmd:  load -f /var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpskz5f13r/Last-registered-both-single-and-two-neighbours-on-tos-network.candl
+CLI parsed successfully
+BOUNDERY: 0
+REVERSIBLE: 0
+/var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpskz5f13r/Last-registered-both-single-and-two-neighbours-on-tos-network.candl
+Lastregisteredbothsingleandtwoneighboursontosnetwork
+ConfPlaces
+ConfConstants
+CLI parsed successfully
+===============================
+Start unfolding
+
+Unfolding complete |P|=120|T|=2115|A|=7860
+Time for unfolding: 0m 0.861sec
+
+ConfObservers
+CLI parsed successfully
+Run Sim
+from SP: blank
+0
+0.1
+20
+
+Runs: 1
+
+SimThreads: 4
+
+SimResults
+
+iCurrentRunCount: 1
+
+iResultPoints: 200
+
+vvdPlacesResutls: 202
+
+EXPORTS
+_spike/output/places.csv
+.*
+PLACES
+
+COLORS
+
+_spike/output/transitions.csv
+.*
+TRANSITIONS
+
+COLORS
+ImportCmd:  sim INFO - main - Artifact: _spike/output/places.csv
+INFO - main - Artifact: _spike/output/transitions.csv
+INFO - main - * Visualising temporal network *
+str(medium_gml_path): /var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpskz5f13r/tos-network.gml
+INFO - main - Causal graph: /Users/walton/Documents/DPhil/proof-of-concept/causal_graph.html
+INFO - main - * Visualising network animation with slider *
+INFO - main - Animation: /Users/walton/Documents/DPhil/proof-of-concept/network_animation_with_slider.html
+INFO - main - Plotting counts by time
+INFO - main - Non-coloured counts path: /Users/walton/Documents/DPhil/proof-of-concept/Non-coloured-counts.html
+INFO - main - Artifact: /Users/walton/Documents/DPhil/proof-of-concept/causal_graph.html
+INFO - main - Artifact: /Users/walton/Documents/DPhil/proof-of-concept/network_animation_with_slider.html
+INFO - main - Artifact: /Users/walton/Documents/DPhil/proof-of-concept/Non-coloured-counts.html

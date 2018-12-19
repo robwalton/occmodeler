@@ -55,24 +55,53 @@ def test_place_to_candl():
 
 class TestTransitions:
 
-    def test_follow_neighbour_to_candl(self, place_a, place_b):
-        t = model.FollowNeighbour(place_a, place_b)
+    # TODO: some tests should be made on hollow TestTransition extended from Transition
+
+    def test_expand_name(self):
+        assert model.Transition.expand_name('prefixab') == ('prefix', 'a', 'b')
+
+    def test_transition_with_underscores_in_prefix_fails(self, place_a, place_b):
+        with pytest.raises(ValueError):
+            model.FollowNeighbour(place_a, place_b, name_prefix='with_underscore')
+
+    def test_follow_neighbour_to_candl_with_mass_action(self, place_a, place_b):
+        t = model.FollowNeighbour(place_a, place_b, rate='MassAction(1)')
         assert t.to_candl() == """\
-  ab
+  f1ab
  {[is_neighbour(u, n1)]}
     : [b >= {n1}]
     : [b + {u}] & [a - {u}]
     : MassAction(1)
     ;"""
 
+    def test_follow_neighbour_to_candl_with_rate_1(self, place_a, place_b):
+        t = model.FollowNeighbour(place_a, place_b)
+        assert t.to_candl() == """\
+  f1ab
+ {[is_neighbour(u, n1)]}
+    : [b >= {n1}]
+    : [b + {u}] & [a - {u}]
+    : 1
+    ;"""
+
+    def test_follow_neighbour_to_candl_with_rate_name_prefix(self, place_a, place_b):
+        t = model.FollowNeighbour(place_a, place_b, name_prefix='xyz')
+        assert t.to_candl() == """\
+  xyzf1ab
+ {[is_neighbour(u, n1)]}
+    : [b >= {n1}]
+    : [b + {u}] & [a - {u}]
+    : 1
+    ;"""
+
     def test_follow_two_neighbours_to_candl(self, place_a, place_b):
         t = model.FollowTwoNeighbours(place_a, place_b)
         assert t.to_candl() == """\
-  ab
+  f2ab
  {[are_both_neighbours(u, n1, n2)]}
     : [b >= {n1++n2}]
     : [b + {u}] & [a - {u}]
-    : MassAction(1)
+    : 1
     ;"""
 
     def test_external_to_candl(self, place_a, place_b):
@@ -126,6 +155,14 @@ class TestUnitModel:
         print('t.guard_function:', t.guard_function)
         assert m.functions == [model.AreBothNeighbours()]
 
+    def test_add_transition_with_duplicate_name_fails(self, m, place_a, place_b):
+        m.variables.append(model.n2)
+        m.add_places_from([place_a, place_b])
+        t = model.FollowTwoNeighbours(place_a, place_b)
+        m.add_transition(t)
+        with pytest.raises(ValueError):
+            m.add_transition(t)
+
     def test__colorsets_chunk(self, m, medium_graph):
         assert m._colorsets_chunk(medium_graph) == """\
 colorsets:
@@ -158,11 +195,11 @@ discrete:
                          model.External(place_a, place_b, 2, [15, 16])]
         assert m._transitions_chunk() == """\
 transitions:
-  ab
+  f1ab
  {[is_neighbour(u, n1)]}
     : [b >= {n1}]
     : [b + {u}] & [a - {u}]
-    : MassAction(1)
+    : 1
     ;
 deterministic:
   extab
@@ -228,35 +265,35 @@ discrete:
   Unit C = 0`0;
 
 transitions:
-  ab
+  f1ab
  {[is_neighbour(u, n1)]}
     : [b >= {n1}]
     : [b + {u}] & [a - {u}]
-    : MassAction(1)
+    : 1
     ;
-  bc
+  f2bc
  {[are_both_neighbours(u, n1, n2)]}
     : [c >= {n1++n2}]
     : [c + {u}] & [b - {u}]
-    : MassAction(1)
+    : 1
     ;
-  bC
+  f2bC
  {[are_both_neighbours(u, n1, n2)]}
     : [C >= {n1++n2}]
     : [C + {u}] & [b - {u}]
-    : MassAction(1)
+    : 1
     ;
-  cC
+  f2cC
  {[are_both_neighbours(u, n1, n2)]}
     : [C >= {n1++n2}]
     : [C + {u}] & [c - {u}]
-    : MassAction(1)
+    : 1
     ;
-  Cc
+  f2Cc
  {[are_both_neighbours(u, n1, n2)]}
     : [c >= {n1++n2}]
     : [c + {u}] & [C - {u}]
-    : MassAction(1)
+    : 1
     ;
 deterministic:
   extab

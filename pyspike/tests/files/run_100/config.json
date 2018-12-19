@@ -1,0 +1,38 @@
+{
+  "candl": {
+    "candl_template_path": "",
+    "gml_path": ""
+  },
+  "seed": 893460923,
+  "spike": {
+    "model_args": {},
+    "model_path": "/var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpskz5f13r/Last-registered-both-single-and-two-neighbours-on-tos-network.candl",
+    "repeat_sim": 1,
+    "sim_args": {
+      "export": [
+        {
+          "places": [],
+          "to": "places.csv"
+        },
+        {
+          "to": "transitions.csv",
+          "transitions": []
+        }
+      ],
+      "interval": {
+        "start": 0,
+        "step": 0.1,
+        "stop": 20
+      },
+      "name": "blank",
+      "runs": 1,
+      "solver": "direct",
+      "threads": 0,
+      "type": "stochastic"
+    }
+  },
+  "visualisation": {
+    "medium_gml_path": "/var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpskz5f13r/tos-network.gml",
+    "num_runs": 1
+  }
+}

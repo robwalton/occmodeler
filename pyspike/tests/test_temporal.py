@@ -178,6 +178,18 @@ class TestCausalPlotting(object):
             url = py.plot(fig)
             print(url)
 
+    def test_with_run_100(self):
+        graph_medium, place_change_events, transition_events = _load_run_100()
+        causal_graph = generate_causal_graph(
+            place_change_events, transition_events, 0.1)
+        fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium)
+        if PLOT:
+            url = py.plot(fig)
+            print(url)
+        raise AssertionError("Missing transitions at 2s (or 2.1) for ")
+
+
+# TODO: Remove duplication here and in pyspike.tests.files.__init__
 
 def _load_run_90():
     graph_medium = nx.read_gml(tests.files.RUN_90_GML, destringizer=int)
@@ -185,6 +197,16 @@ def _load_run_90():
     places = tidydata.prepend_tidy_frame_with_tstep(places)
     place_change_events = generate_place_change_events(places)
     transitions = tidydata.read_csv(tests.files.RUN_90_TRANSITIONS, 'transition', drop_non_coloured_sums=True)
+    transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
+    transition_events = generate_transition_events(transitions)
+    return graph_medium, place_change_events, transition_events
+
+def _load_run_100():
+    graph_medium = nx.read_gml(tests.files.RUN_100_GML, destringizer=int)
+    places = tidydata.read_csv(tests.files.RUN_100_PLACES, 'place', drop_non_coloured_sums=True)
+    places = tidydata.prepend_tidy_frame_with_tstep(places)
+    place_change_events = generate_place_change_events(places)
+    transitions = tidydata.read_csv(tests.files.RUN_100_TRANSITIONS, 'transition', drop_non_coloured_sums=True)
     transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
     transition_events = generate_transition_events(transitions)
     return graph_medium, place_change_events, transition_events
