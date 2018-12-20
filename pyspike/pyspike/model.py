@@ -14,8 +14,8 @@ from pyspike import petrinet
 class Color:
     name: str
 
-    def place(self, name: str, initial_marking: str = '0`0'):
-        return Place(self, name, initial_marking)
+    def place(self, name: str, initial_marking: str = '0`0', pos_offset: Sequence[int] = (0, 0)):
+        return Place(self, name, initial_marking=initial_marking, pos_offset=pos_offset)
 
     def var(self, name: str):
         return Variable(self, name)
@@ -80,10 +80,14 @@ class AreBothNeighbours(ColorFunction):
 
 class Place:
 
-    def __init__(self, color: Color, name: str, initial_marking: str = '0`0'):
+    def __init__(self, color: Color, name: str, initial_marking: str = '0`0', pos_offset: Sequence[int] = (0, 0)):
         self.color = color
         self.name = name
         self.initial_marking = initial_marking
+        self.pos_offset = tuple(pos_offset)
+
+        assert isinstance(initial_marking, str)
+
         # TODO: Add a unicode name too if necessary
 
     def to_candl(self):

@@ -91,12 +91,13 @@ def _generate_medium_edge_trace(medium_graph, medium_layout):
     )
 
 
-def _generate_plotly_node_data_trace_list(
-        places, medium_layout, tstep, ordered_state_list, color_dict, diff_only=False, num_runs=1):
+def _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_state_list, color_dict, diff_only=False,
+                                          num_runs=1, place_offsets_dict={}):
 
     number_nodes = len(medium_layout)
     data = []
     sizeref = 1 if num_runs == 1 else (number_nodes / 100)
+
 
     if not diff_only:
         # Add each trace to data list
@@ -114,10 +115,22 @@ def _generate_plotly_node_data_trace_list(
             ntext.append(str(node_index))
 
         for state_name in ordered_state_list:
+            if state_name in place_offsets_dict:
+                x_offset, y_offset = place_offsets_dict[state_name]
+                nx_state = [xval + x_offset for xval in nx_]
+                ny_state = [yval + y_offset for yval in ny]
+            else:
+                nx_state = nx_
+                ny_state = ny
+            #
+            # medium_layout_for_state = {}
+            # for node_name, xy in medium_layout.items():
+            #     x, y = xy
+            #     medium_layout_for_state[node_name] = (x + x_offset, y + y_offset)
             trace_data = dict(
                 name=render_name(state_name),
-                x=nx_,
-                y=ny,
+                x=nx_state,
+                y=ny_state,
                 mode='markers',
                 hoverinfo='text',
                 text=ntext,
@@ -168,8 +181,20 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
     medium_edge_trace = _generate_medium_edge_trace(
         medium_graph, medium_layout)
 
+    if 'offsets' in medium_graph.graph:
+            print(medium_graph.graph['offsets'])
+            place_offsets_dict = medium_graph.graph['offsets']
+            # x_offset, y_offset = medium_graph.graph['offsets'][state_name]
+            # medium_layout_for_state = {}
+            # for node_name, xy in medium_layout.items():
+            #     x, y = xy
+            #     medium_layout_for_state[node_name] = (x + x_offset, y + y_offset)
+    else:
+        place_offsets_dict = {}
+
     initial_node_traces = _generate_plotly_node_data_trace_list(
-        places, medium_layout, 0, ordered_state_list, color_dict, diff_only=False, num_runs=num_runs)
+        places, medium_layout, 0, ordered_state_list, color_dict, diff_only=False, num_runs=num_runs,
+        place_offsets_dict=place_offsets_dict)
 
     tstep_list = places.tstep.unique()
     t_list = places['time'].unique()
@@ -182,8 +207,8 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
     sliders_step_list = []  # one per frame
     places.sort_values('num', inplace=True)
     for tstep, t in zip(tstep_list, t_list):
-        frame_data = _generate_plotly_node_data_trace_list(
-            places, medium_layout, tstep, ordered_state_list, color_dict, diff_only=True, num_runs=num_runs)
+        frame_data = _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_state_list, color_dict,
+                                                           diff_only=True, num_runs=num_runs)
         num_traces = len(ordered_state_list)
         assert len(frame_data) == num_traces
         frames.append(

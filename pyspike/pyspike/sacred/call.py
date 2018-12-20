@@ -31,12 +31,23 @@ def run_experiment(unit_model: UnitModel, medium_graph: nx.Graph = None, medium_
         ex.add_source_file(str(calling_file))
 
     if file_storage_observer:
-        ex.observers.append(FileStorageObserver.create('/Users/walton/Documents/DPhil/proof-of-concept/runs'))
+        # TODO: remove the observer if false!!!!
+        if len(ex.observers) == 0:  # TODO: hack needed to keep leak into module
+            ex.observers.append(FileStorageObserver.create('/Users/walton/Documents/DPhil/proof-of-concept/runs'))
 
     # with tempfile.TemporaryDirectory() as tmp_dir:
     tmp_dir = tempfile.mkdtemp()
 
     print('created temporary directory', tmp_dir)
+
+    # Add state offsets and persist with the gml
+    assert medium_graph
+    medium_graph.graph['offsets'] = {}
+    for place in unit_model.places:
+        assert len(place.pos_offset) == 2
+        medium_graph.graph['offsets'][place.name] = tuple(place.pos_offset)
+
+    # TODO: We require medium_graph and so a gml fill will always be written
     medium_gml = create_gml_if_necessary(medium_graph, medium_gml, graph_name, tmp_dir)
 
     candl_path = unit_model.to_candl_file(medium_graph, graph_name, tmp_dir)

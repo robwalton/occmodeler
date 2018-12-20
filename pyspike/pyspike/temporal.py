@@ -109,18 +109,18 @@ def generate_causal_graph(place_change_events: DataFrame,
     # def determine_earliest_unused_transition
 
 
-#NOAXIS = dict(
-#     title='',
-#     autorange=True,
-#     showgrid=False,
-#     zeroline=False,
-#     showline=False,
-#     ticks='',
-#     showticklabels=False,
-#     showspikes=False
-# )
+NOAXIS = dict(
+    title='',
+    autorange=True,
+    showgrid=False,
+    zeroline=False,
+    showline=False,
+    ticks='',
+    showticklabels=False,
+    showspikes=False
+)
 
-NOAXIS = {}
+# NOAXIS = {}
 
 class Style(Enum):
     ORIG = 1
@@ -161,10 +161,19 @@ def generate_causal_graph_figure(
     edge_trace_list = []
 
     for state_name in ordered_state_list:
+        if 'offsets' in medium_graph.graph:
+            print(medium_graph.graph['offsets'])
+            x_offset, y_offset = medium_graph.graph['offsets'][state_name]
+            medium_layout_for_state = {}
+            for node_name, xy in medium_layout.items():
+                x, y = xy
+                medium_layout_for_state[node_name] = (x + x_offset, y + y_offset)
+        else:
+            medium_layout_for_state = medium_layout
         color = color_dict[state_name]
         occasion_list = occasion_by_state_dict[state_name]
         node_trace_list.append(
-            generate_occasion_trace(occasion_list, color, medium_layout, t_to_z)
+            generate_occasion_trace(occasion_list, color, medium_layout_for_state, t_to_z)
         )
 
         neighbour_output_edge_list = []
@@ -181,10 +190,10 @@ def generate_causal_graph_figure(
 
         edge_trace_list.append(
             generate_edge_trace(
-                local_output_edge_list, color, medium_layout, t_to_z, state_name, dash='dot', style=style)
+                local_output_edge_list, color, medium_layout_for_state, t_to_z, state_name, dash='dot', style=style)
         )
         edge_trace_list.append(
-            generate_edge_trace(neighbour_output_edge_list, color, medium_layout, t_to_z, state_name, style=style)
+            generate_edge_trace(neighbour_output_edge_list, color, medium_layout_for_state, t_to_z, state_name, style=style)
         )
     fig = render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id)
     return fig
