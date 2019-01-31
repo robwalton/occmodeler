@@ -1,4 +1,5 @@
 import os
+import random
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -77,6 +78,23 @@ class AreBothNeighbours(ColorFunction):
     def _graph_to_func(self, medium_graph):
         return petrinet.graph_to_are_both_neighbours_func(medium_graph)
 
+
+# a_initial_toks = []
+# b_initial_toks = []
+# B_initial_toks = []
+# A_initial_toks = []
+#
+# randomly_allocate_range_of_integers_between_lists((a_initial_toks, A_initial_toks), 30)
+# randomly_allocate_range_of_integers_between_lists((b_initial_toks, b_initial_toks), 30)
+
+
+def randomly_allocate_range_of_integers_between_lists(list_of_lists, number_nodes):
+    for i in range(number_nodes):
+        random.choice(list_of_lists).append(i)
+
+
+def marking(list_of_nodes_indexes_with_one_token):
+    return '++'.join(str(n) for n in list_of_nodes_indexes_with_one_token)
 
 class Place:
 
