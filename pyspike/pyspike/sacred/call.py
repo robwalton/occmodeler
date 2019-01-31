@@ -31,9 +31,9 @@ def run_experiment(unit_model: UnitModel, medium_graph: nx.Graph = None, medium_
         ex.add_source_file(str(calling_file))
 
     if file_storage_observer:
-        # TODO: remove the observer if false!!!!
-        if len(ex.observers) == 0:  # TODO: hack needed to keep leak into module
-            ex.observers.append(FileStorageObserver.create('/Users/walton/Documents/DPhil/proof-of-concept/runs'))
+        ex.observers = [FileStorageObserver.create('/Users/walton/Documents/DPhil/proof-of-concept/runs')]
+    else:
+        ex.observers = []
 
     # with tempfile.TemporaryDirectory() as tmp_dir:
     tmp_dir = tempfile.mkdtemp()
