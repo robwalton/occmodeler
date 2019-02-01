@@ -21,6 +21,10 @@ def place_b():
     return model.Place(model.Unit, 'b', '0`0')
 
 
+@pytest.fixture()
+def place_e():
+    return model.Place(model.Unit, 'e', '0`0')
+
 IS_NEIGHBOUR_CANDL = (
     'bool  is_neighbour(Unit u,Unit n1) '
     '{ (u=1 & (n1=2|n1=3)) | (u=2 & (n1=1|n1=3)) | (u=3 & (n1=1|n1=2|n1=4)) | (u=4 & (n1=3)) };')
@@ -84,6 +88,27 @@ class TestTransitions:
     : 1
     ;"""
 
+    def test_follow_neighbour_to_candl_with_rate_1_enabled_by_local(self, place_a, place_b):
+        place_e = model.Place(model.Unit, 'e')
+        t = model.FollowNeighbour(place_a, place_b, enabled_by_local=place_e)
+        assert t.to_candl() == """\
+  f1Leab
+ {[is_neighbour(u, n1)]}
+    : [b >= {n1}] & [e >= {u}]
+    : [b + {u}] & [a - {u}]
+    : 1
+    ;"""
+
+    def test_follow_neighbour_to_candl_with_rate_1_use_read_arc(self, place_a, place_b):
+        t = model.FollowNeighbour(place_a, place_b, use_read_arc=True)
+        assert t.to_candl() == """\
+  f1ab
+ {[is_neighbour(u, n1)]}
+    : [b >= {n1}] & [a >= {u}]
+    : [b + {u}]
+    : 1
+    ;"""
+
     def test_follow_neighbour_to_candl_with_rate_name_prefix(self, place_a, place_b):
         t = model.FollowNeighbour(place_a, place_b, name_prefix='xyz')
         assert t.to_candl() == """\
@@ -103,6 +128,27 @@ class TestTransitions:
     : [b + {u}] & [a - {u}]
     : 1
     ;"""
+
+    def test_follow_two_neighbours_to_candl_with_rate_1_enabled_by_local(self, place_a, place_b):
+        place_e = model.Place(model.Unit, 'e')
+        t = model.FollowTwoNeighbours(place_a, place_b, enabled_by_local=place_e)
+        assert t.to_candl() == """\
+  f2Leab
+ {[are_both_neighbours(u, n1, n2)]}
+    : [b >= {n1++n2}] & [e >= {u}]
+    : [b + {u}] & [a - {u}]
+    : 1
+    ;"""
+
+    def test_modulated_internal(self, place_a, place_b, place_e):
+        t = model.ModulatedInternal(place_a, place_b, place_e)
+        assert t.to_candl() == """\
+  mieab
+    : [e >= {u}]
+    : [b + {u}] & [a - {u}]
+    : 1
+    ;"""
+
 
     def test_external_to_candl(self, place_a, place_b):
         t = model.External(place_a, place_b, 2, [15, 16])

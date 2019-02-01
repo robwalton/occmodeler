@@ -128,6 +128,8 @@ class Style(Enum):
     FOUNTAIN = 3
 
 
+REVERSE_BARRED_ITEMS = False
+
 def generate_causal_graph_figure(
         causal_graph, medium_graph, medium_layout=None, z_scale=.2, run_id=None, style=Style.ORIG):
     # TODO: the z scale has no effect as plotly autofits entire structure
@@ -156,6 +158,10 @@ def generate_causal_graph_figure(
     # Create a node list for occasions of each state, and edge list for edges leaving that stat
     def t_to_z(t):
         return t * z_scale
+
+    def t_to_z_reversed(t):
+        return - t * z_scale
+
     occasion_by_state_dict = index_causal_graph_by_state(causal_graph)
     node_trace_list = []
     edge_trace_list = []
@@ -172,8 +178,14 @@ def generate_causal_graph_figure(
             medium_layout_for_state = medium_layout
         color = color_dict[state_name]
         occasion_list = occasion_by_state_dict[state_name]
+
+        if REVERSE_BARRED_ITEMS and state_name.isupper():
+            to_to_z_func = t_to_z_reversed
+        else:
+            to_to_z_func = t_to_z
+
         node_trace_list.append(
-            generate_occasion_trace(occasion_list, color, medium_layout_for_state, t_to_z)
+            generate_occasion_trace(occasion_list, color, medium_layout_for_state, to_to_z_func)
         )
 
         neighbour_output_edge_list = []

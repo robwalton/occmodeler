@@ -87,6 +87,7 @@ class AreBothNeighbours(ColorFunction):
 # randomly_allocate_range_of_integers_between_lists((a_initial_toks, A_initial_toks), 30)
 # randomly_allocate_range_of_integers_between_lists((b_initial_toks, b_initial_toks), 30)
 
+NO_TOKENS_MARKING = "0`0"
 
 def randomly_allocate_range_of_integers_between_lists(list_of_lists, number_nodes):
     for i in range(number_nodes):
@@ -94,7 +95,10 @@ def randomly_allocate_range_of_integers_between_lists(list_of_lists, number_node
 
 
 def marking(list_of_nodes_indexes_with_one_token):
-    return '++'.join(str(n) for n in list_of_nodes_indexes_with_one_token)
+    if not list_of_nodes_indexes_with_one_token:
+        return NO_TOKENS_MARKING
+    else:
+        return '++'.join(str(n) for n in list_of_nodes_indexes_with_one_token)
 
 class Place:
 
@@ -158,17 +162,47 @@ class Transition(ABC):
 
 class FollowNeighbour(Transition):
 
-    def __init__(self, source: Place, target: Place, rate: str = '1', name_prefix=''):
+    def __init__(self, source: Place, target: Place, rate: str = '1', name_prefix='',
+                 use_read_arc=False, enabled_by_local: Place = None):  # TODO: consolidate enable/activate
         super().__init__(source, target,
                          Transition.Kind.STOCHASTIC, "follow_neighbour", IsNeighbour(),
-                         name_prefix=name_prefix + 'f1')
+                         name_prefix=name_prefix + ('f1L' if enabled_by_local else 'f1'))
         assert set(self.guard_function.variables) == {u, n1}
         self.rate = str(rate)
+        assert not (use_read_arc and enabled_by_local)
+        self.use_read_arc = use_read_arc
+        self.enabled_by_local = enabled_by_local
+
+    @property
+    def name(self):
+        ebl = self.enabled_by_local.name if self.enabled_by_local else ""
+        return f"{self.name_prefix}{ebl}{self.source.name}{self.target.name}"
 
     def to_candl(self):
         s = self.source.name
         t = self.target.name
-        return f"""\
+
+        if self.use_read_arc:
+            return f"""\
+  {self.name}
+ {{[is_neighbour(u, n1)]}}
+    : [{t} >= {{{n1.name}}}] & [{s} >= {{{u.name}}}]
+    : [{t} + {{{u.name}}}]
+    : {self.rate}
+    ;"""
+
+        elif self.enabled_by_local:
+            e = self.enabled_by_local.name
+            return f"""\
+  {self.name}
+ {{[is_neighbour(u, n1)]}}
+    : [{t} >= {{{n1.name}}}] & [{e} >= {{{u.name}}}]
+    : [{t} + {{{u.name}}}] & [{s} - {{{u.name}}}]
+    : {self.rate}
+    ;"""
+
+        else:
+            return f"""\
   {self.name}
  {{[is_neighbour(u, n1)]}}
     : [{t} >= {{{n1.name}}}]
@@ -179,23 +213,68 @@ class FollowNeighbour(Transition):
 
 class FollowTwoNeighbours(Transition):
 
-    def __init__(self, source: Place, target: Place, rate: str = '1', name_prefix=''):
+    def __init__(self, source: Place, target: Place, rate: str = '1', name_prefix='',
+                 enabled_by_local: Place = None):
         super().__init__(source, target,
                          Transition.Kind.STOCHASTIC, "follow_two_neighbours", AreBothNeighbours(),
-                         name_prefix=name_prefix + 'f2')
+                         name_prefix=name_prefix + ('f2L' if enabled_by_local else 'f2'))
         assert set(self.guard_function.variables) == {u, n1, n2}
         self.rate = rate
+        self.enabled_by_local = enabled_by_local
+
+    @property
+    def name(self):
+        ebl = self.enabled_by_local.name if self.enabled_by_local else ""
+        return f"{self.name_prefix}{ebl}{self.source.name}{self.target.name}"
 
     def to_candl(self):
         s = self.source.name
         t = self.target.name
-        return f'''\
+        if self.enabled_by_local:
+            e = self.enabled_by_local.name
+            return f'''\
+  {self.name}
+ {{[are_both_neighbours(u, n1, n2)]}}
+    : [{t} >= {{n1++n2}}] & [{e} >= {{{u.name}}}]
+    : [{t} + {{u}}] & [{s} - {{u}}]
+    : {self.rate}
+    ;'''
+        else:  # not enabled_by_local
+            return f'''\
   {self.name}
  {{[are_both_neighbours(u, n1, n2)]}}
     : [{t} >= {{n1++n2}}]
     : [{t} + {{u}}] & [{s} - {{u}}]
     : {self.rate}
     ;'''
+
+
+class ModulatedInternal(Transition):
+
+    def __init__(self, source: Place, target: Place, activate: Place, rate: str = '1', name_prefix=''):
+        super().__init__(source, target,
+                         Transition.Kind.STOCHASTIC, "modulated_internal", AreBothNeighbours(),
+                         name_prefix=name_prefix + 'mi')
+        assert set(self.guard_function.variables) == {u, n1, n2}
+        self.activate = activate
+        self.rate = rate
+
+    @property
+    def name(self):
+        ebl = self.activate.name if self.activate else ""
+        return f"{self.name_prefix}{ebl}{self.source.name}{self.target.name}"
+
+    def to_candl(self):
+        s = self.source.name
+        t = self.target.name
+        m = self.activate.name
+        return f'''\
+  {self.name}
+    : [{m} >= {{u}}]
+    : [{t} + {{u}}] & [{s} - {{u}}]
+    : {self.rate}
+    ;'''
+
 
 
 class External(Transition):
