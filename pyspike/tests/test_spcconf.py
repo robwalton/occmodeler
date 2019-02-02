@@ -166,7 +166,7 @@ class TestODToSpc(object):
     def test_to_spc_import_only(self):
         od = OD([('import', IMPORT)])
 
-        assert od_to_spc(od) == dedent('''\
+        assert od_to_spc(od, 1) == dedent('''\
         import: {
             from: "model/diffusion_2D4.andl"
         }''')
@@ -179,7 +179,7 @@ class TestODToSpc(object):
                          ('runs', 100)])
 
         od = OD(configuration=OD(simulation=simulation))
-        assert od_to_spc(od) == dedent('''\
+        assert od_to_spc(od, 1) == dedent('''\
         configuration: {
             simulation: {
                 name: "Diffusion"
@@ -195,7 +195,7 @@ class TestODToSpc(object):
                          ('interval', INTERVAL)])
 
         od = OD(configuration=OD(simulation=simulation))
-        assert od_to_spc(od) == dedent('''\
+        assert od_to_spc(od, 1) == dedent('''\
         configuration: {
             simulation: {
                 type: stochastic
@@ -208,7 +208,7 @@ class TestODToSpc(object):
                          ('export', [EXPORT1, EXPORT2, EXPORT3])])
 
         od = OD(configuration=OD(simulation=simulation))
-        assert od_to_spc(od) == dedent('''\
+        assert od_to_spc(od, 1) == dedent('''\
         configuration: {
             simulation: {
                 type: stochastic
@@ -229,6 +229,25 @@ class TestODToSpc(object):
 
     def test_to_spc_integration(self):
         print('---')
-        print(od_to_spc(INTEGRATION))
+        print(od_to_spc(INTEGRATION, 1))
         print('---')
-        assert od_to_spc(INTEGRATION) == INTEGRATION_SPC
+        assert od_to_spc(INTEGRATION, 1) == INTEGRATION_SPC
+
+def test_expand_export_path_list():
+    epl = ['o/places.csv', 'o/transitions.csv']
+    expanded_epl = pyspike.spcconf.expand_export_path_list(epl, 3)
+    print('**')
+    print(expanded_epl)
+    print('**')
+    assert expanded_epl == [
+        'o/places.csv',
+        'o/places_0000.csv',
+        'o/places_0001.csv',
+        'o/places_0002.csv',
+        'o/transitions.csv',
+        'o/transitions_0000.csv',
+        'o/transitions_0001.csv',
+        'o/transitions_0002.csv',
+    ]
+
+

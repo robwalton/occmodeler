@@ -65,5 +65,10 @@ def test_places(a, b, c, C):
 
 
 def test_Call(m, medium_graph):
-    call.run_experiment(m, medium_graph, graph_name='four graph', calling_file=PATH, file_storage_observer=True)
+    call.run_experiment(m, medium_graph, graph_name='four graph', calling_file=PATH, file_storage_observer=False)
+    # manual check only
 
+
+def test_Call_with_multiple_repeats(m, medium_graph):
+    call.run_experiment(m, medium_graph, graph_name='four graph', repeat_sim=3, calling_file=PATH, file_storage_observer=False)
+    # manual check only

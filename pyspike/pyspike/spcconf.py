@@ -40,9 +40,20 @@ def create_conf_file(model_path, model_args, sim_args, repeat_sim, output_dir):
     sim_args['export'] = export_list
 
     od = args_to_od(model_path, model_args, sim_args, repeat_sim)
-    spc_string = od_to_spc(od)
+    spc_string = od_to_spc(od, repeat_sim)
 
+    if repeat_sim > 1:
+        export_path_list = expand_export_path_list(export_path_list, repeat_sim)
     return export_path_list, spc_string
+
+
+def expand_export_path_list(export_path_list, repeat_sim):
+    expanded_path_list = []
+    for path in export_path_list:
+        expanded_path_list.append(path)
+        for i in range(repeat_sim):
+            expanded_path_list.append(path.replace('.csv', f"_{i:04d}.csv"))
+    return expanded_path_list
 
 
 def args_to_od(model_path, model_args, sim_args, repeat_sim=1):
@@ -66,6 +77,12 @@ def args_to_od(model_path, model_args, sim_args, repeat_sim=1):
     if model_args:
         od['configuration']['model'] = dict(model_args)  # Assume order unimportant
 
+
+    # TODO: remove repeated code
+
+    # NOTE: Even when repeat_sim > 1 write an un-numbered file too. This means that if 10 sims are asked for the code
+    # will run 11, but meas the existing pipelin will work as is. TODO: Fix pipeline to run with numbered files.
+
     # configuration : simulation
     od['configuration']['simulation'] = OD(
         name=sim_args['name'],
@@ -76,9 +93,34 @@ def args_to_od(model_path, model_args, sim_args, repeat_sim=1):
         runs=sim_args['runs'],
         export=sim_args['export']
     )
+    if repeat_sim > 1:
+        assert repeat_sim <= 10000  # we will hard code the number of digits to 4 (but start at 0)
+        for i in range(repeat_sim):
+            export_dict_list = deepcopy(sim_args['export'])
+            export_dict_list = add_repeat_sim_index_export_dict_list(export_dict_list, i)
+            od['configuration'][sim_key(i)] = OD(
+                name=sim_args['name'],
+                type=sim_args['type'],
+                solver=sim_args['solver'],
+                threads=sim_args['threads'],
+                interval=sim_args['interval'],
+                runs=sim_args['runs'],
+                export=export_dict_list
+            )
 
     return od
 
+def add_repeat_sim_index_export_dict_list(edl, i):
+    numbered_edl = []
+    for d in edl:
+        d_numbered = deepcopy(d)
+        d_numbered['to'] = d_numbered['to'].replace('.csv', f"_{i:04d}.csv")
+        numbered_edl.append(d_numbered)
+    return numbered_edl
+
+
+def sim_key(sim_index):
+    return "<{:04d}>simulation".format(sim_index)
 
 def _walk(node, f):
     for key in list(node):
@@ -88,7 +130,7 @@ def _walk(node, f):
             node[key] = f(node[key])
 
 
-def od_to_spc(od):
+def od_to_spc(od, repeat_sim):
 
     od = deepcopy(od)
 
@@ -108,27 +150,50 @@ def od_to_spc(od):
         if 'simulation' in od['configuration']:
             if 'name' in od['configuration']['simulation']:
                 od['configuration']['simulation']['name'] = "'" + od['configuration']['simulation']['name'] + "'"
+        if repeat_sim > 1:
+            for i in range(repeat_sim):
+                if sim_key(i) in od['configuration']:
+                    if 'name' in od['configuration'][sim_key(i)]:
+                        od['configuration'][sim_key(i)]['name'] = "'" + od['configuration'][sim_key(i)][
+                            'name'] + "'"
 
     # Collapse interval:
+
+    def collapse_interval(sk):
+        if 'interval' in od['configuration'][sk]:
+            interval_dict = od['configuration'][sk]['interval']
+            collapsed = '{start}:{step}:{stop}'.format(**interval_dict)
+            od['configuration'][sk]['interval'] = collapsed
+
     if 'configuration' in od:
         if 'simulation' in od['configuration']:
-            if 'interval' in od['configuration']['simulation']:
-                interval_dict = od['configuration']['simulation']['interval']
-                collapsed = '{start}:{step}:{stop}'.format(**interval_dict)
-                od['configuration']['simulation']['interval'] = collapsed
+            collapse_interval('simulation')
+        if repeat_sim > 1:
+            for i in range(repeat_sim):
+                collapse_interval(sim_key(i))
+
+
+
 
     # Replace export list with export_1, export_2 and so on
+    def expand_export_list(sk):
+        if 'export' in od['configuration'][sk]:
+            export_list = od['configuration'][sk].pop('export')
+            for i, anexport in enumerate(export_list):
+                anexport['to'] = "'" + anexport['to'] + "'"
+                if 'places' in anexport:
+                    anexport['places'] = '[' + ', '.join(["'" + p + "'" for p in anexport['places']]) + ']'
+                if 'transitions' in anexport:
+                    anexport['transitions'] = '[' + ', '.join(["'" + p + "'" for p in anexport['transitions']]) + ']'
+                od['configuration'][sk]['export<' + str(i) + '>'] = anexport
+
     if 'configuration' in od:
         if 'simulation' in od['configuration']:
-            if 'export' in od['configuration']['simulation']:
-                export_list = od['configuration']['simulation'].pop('export')
-                for i, anexport in enumerate(export_list):
-                    anexport['to'] = "'" + anexport['to'] + "'"
-                    if 'places' in anexport:
-                        anexport['places'] = '[' + ', '.join(["'" + p + "'" for p in anexport['places']]) + ']'
-                    if 'transitions' in anexport:
-                        anexport['transitions'] = '[' + ', '.join(["'" + p + "'" for p in anexport['transitions']]) + ']'
-                    od['configuration']['simulation']['export<' + str(i) + '>'] = anexport
+            expand_export_list('simulation')
+        if repeat_sim > 1:
+            for ri in range(repeat_sim):
+                expand_export_list(sim_key(ri))
+
 
     # ---Create and further process json string---
 
@@ -152,6 +217,6 @@ def od_to_spc(od):
     jrep = jrep.replace("'", '"')
 
     # Remove any <#> added during expansion of exports above
-    jrep = re.sub('<.>', '', jrep)
+    jrep = re.sub('<.+>', '', jrep)
 
     return jrep
