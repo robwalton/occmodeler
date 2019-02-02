@@ -226,6 +226,57 @@ class TestConflationOfIssuesOn12NeighbourFollowing:
         run_on_tos_network(m, start=0, stop=5, step=.02, runs=1000)
         assert False
 
+    def test_two_coupled_directly_using_modulated_internal(self):
+        pass
+
+    def test_two_coupled_directly_using_ab_AB(self):
+        a_off, b_off, x_off = self.triangle_coords_around_zero(.05)
+
+        a, A = websci19.models.generate_pair_with_marking('a', 'A', N_NODES, POLE1_NODES, pos_offset=a_off)
+        b, B = websci19.models.generate_pair_with_marking('b', 'B', N_NODES, POLE1_NODES, pos_offset=b_off)
+        x, X = websci19.models.generate_pair_with_marking('x', 'X', N_NODES, POLE1_NODES, pos_offset=x_off)
+        m = UnitModel(name="convergence from noise two issues conflated", colors=[Unit], variables=[u, n1, n2],
+                      places=[a, A, b, B, x, X])
+
+        m.add_transitions_from([
+            # External influence
+            follow1(a, A),
+            follow1(A, a),
+            follow2(a, A, 2),
+            follow2(A, a, 2),
+            follow1(b, B),
+            follow1(B, b),
+            follow2(b, B, 2),
+            follow2(B, b, 2),
+
+
+            # Drive the larger
+            modulated_internal(x, X, A, activate2=B, rate=2),
+            modulated_internal(X, x, a, activate2=b, rate=2),
+            modulated_internal(A, a, x),
+            modulated_internal(B, b, x),
+            modulated_internal(a, A, X),
+            modulated_internal(b, B, X),
+        ])
+        run_on_tos_network(m, runs=1000, start=0, stop=10, step=.1)
+
+    def test_a_model_in_which_nodes_fight_back_while_loosing(self):
+        """
+        This could be either at the in individual level but ideally at the group level.
+        Intuitively we need a derivative: whereby if our lowercaseness is waining then
+        we defend our view by shouting or by pulling both ourselves and neiwgbours back
+        to our old state.
+        """
+
+    def test_a_model_in_which_we_list_less_to_people_with_opposing_xX_views(self):
+        """
+        xX from model above. if a node has 1 or 2 neigbours with differing xX view
+        then pay them less attention. Is it the same to pay them more attention if
+        they share the same xy view? I feel not.
+        :return:
+        """
+
+
 class InterestingPrediction:
 
     # We predict with an unproved method and

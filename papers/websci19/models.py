@@ -35,20 +35,20 @@ def generate_single_pair_aA_with_random_marking(num_nodes):
 
 
 
-def generate_non_conflated_unit(num_nodes):
-
-    a, A, b, B, e, E = generate_aAbBeE_pairs_with_random_markings(num_nodes)
-
-    m = UnitModel(name="aA and bB non conflated", colors=[Unit], variables=[u, n1, n2], places=[a, A, b, B])
-
-    m.add_transitions_from([
-        follow1(a, A),
-        follow1(A, a),
-        follow1(b, B),
-        follow1(B, b),
-    ])
-
-    return m
+# def generate_non_conflated_unit(num_nodes):
+#
+#     a, A, b, B, e, E = generate_aAbBeE_pairs_with_random_markings(num_nodes)
+#
+#     m = UnitModel(name="aA and bB non conflated", colors=[Unit], variables=[u, n1, n2], places=[a, A, b, B])
+#
+#     m.add_transitions_from([
+#         follow1(a, A),
+#         follow1(A, a),
+#         follow1(b, B),
+#         follow1(B, b),
+#     ])
+#
+#     return m
 
 
 

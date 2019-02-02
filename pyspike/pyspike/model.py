@@ -251,26 +251,34 @@ class FollowTwoNeighbours(Transition):
 
 class ModulatedInternal(Transition):
 
-    def __init__(self, source: Place, target: Place, activate: Place, rate: str = '1', name_prefix=''):
+    def __init__(self, source: Place, target: Place, activate: Place, activate2: Place = None,
+                 rate: str = '1', name_prefix=''):
         super().__init__(source, target,
                          Transition.Kind.STOCHASTIC, "modulated_internal", AreBothNeighbours(),
-                         name_prefix=name_prefix + 'mi')
+                         name_prefix=name_prefix + 'mi2' if activate2 else 'mi')
         assert set(self.guard_function.variables) == {u, n1, n2}
         self.activate = activate
+        self.activate2 = activate2
         self.rate = rate
 
     @property
     def name(self):
         ebl = self.activate.name if self.activate else ""
-        return f"{self.name_prefix}{ebl}{self.source.name}{self.target.name}"
+        ebl2 = self.activate2.name if self.activate2 else ""
+        return f"{self.name_prefix}{ebl}{ebl2}{self.source.name}{self.target.name}"
 
     def to_candl(self):
         s = self.source.name
         t = self.target.name
         m = self.activate.name
+        if self.activate2:
+            m2 = self.activate2.name
+            activate2_term = f" & [{m2} >= {{u}}]"
+        else:
+            activate2_term = ""
         return f'''\
   {self.name}
-    : [{m} >= {{u}}]
+    : [{m} >= {{u}}]{activate2_term}
     : [{t} + {{u}}] & [{s} - {{u}}]
     : {self.rate}
     ;'''

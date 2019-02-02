@@ -149,6 +149,15 @@ class TestTransitions:
     : 1
     ;"""
 
+    def test_modulated_internal_with_two(self, place_a, place_b, place_e):
+        place_f = model.Place(model.Unit, 'f', '0`0')
+        t = model.ModulatedInternal(place_a, place_b, place_e, activate2=place_f)
+        assert t.to_candl() == """\
+  mi2efab
+    : [e >= {u}] & [f >= {u}]
+    : [b + {u}] & [a - {u}]
+    : 1
+    ;"""
 
     def test_external_to_candl(self, place_a, place_b):
         t = model.External(place_a, place_b, 2, [15, 16])
