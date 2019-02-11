@@ -1,10 +1,22 @@
+import os
 from pathlib import Path
 
+import pyspike
+from pyspike import tidydata
 from pyspike.model import FollowNeighbour as follow1
 from pyspike.model import FollowTwoNeighbours as follow2
 from pyspike.model import ModulatedInternal as modulated_internal #(source, target, rate)
 from pyspike.model import UnitModel, u, n1, n2, Unit
 from pyspike.model import marking
+import plotly.offline as py
+import plotly.graph_objs as go
+
+import pyspike
+from pyspike import tidydata
+import pyspike.util
+
+from pyspike.util import render_name
+
 
 import websci19
 import websci19.models
@@ -157,6 +169,51 @@ class TestConvergenceFromNoiseAndEchoChamberLikeBehaviour:
             follow2(A, a, 2),
         ])
         run_on_tos_network(m)
+
+    # NOTE: run and saved as run 160
+    def skip_test_1_and_2_neighbours_with_100_runs(self):
+        a, A = websci19.models.generate_pair_with_random_markings('a', 'A', N_NODES)
+        m = UnitModel(name="convergence from noise follow 2 neighbour only", colors=[Unit], variables=[u, n1, n2], places=[a, A])
+        m.add_transitions_from([
+            follow1(a, A),
+            follow1(A, a),
+            follow2(a, A, 2),
+            follow2(A, a, 2),
+        ])
+        run_on_tos_network(m, repeat_sim=100, save_run=True)
+
+    # NOTE: run and saved as run 161
+    def skip_test_1_and_2_neighbour_for_stable_initial_markings_100_runs(self):
+
+
+        a, A = websci19.models.generate_pair_with_marking('a', 'A', N_NODES, POLE1_NODES)
+        m = UnitModel(name="blah", colors=[Unit], variables=[u, n1, n2], places=[a, A])
+        m.add_transitions_from([
+            follow1(a, A, 0.2),
+            follow1(A, a, 0.2),
+            follow2(a, A, 2),
+            follow2(A, a, 2),
+        ])
+        run_on_tos_network(m, repeat_sim=100, save_run=True)
+        """
+        """
+
+
+    # Run and saved as run 162: check the analysis with this
+    def test_wtf_162(self):
+
+        a, A = websci19.models.generate_pair_with_marking('a', 'A', N_NODES, POLE1_NODES)
+        m = UnitModel(name="blah", colors=[Unit], variables=[u, n1, n2], places=[a, A])
+        m.add_transitions_from([
+            # follow1(a, A, 0.2),
+            # follow1(A, a, 0.2),
+            follow2(a, A, 2),
+            follow2(A, a, 2),
+        ])
+        run_on_tos_network(m, repeat_sim=10, save_run=True)
+        """
+        """
+
 
 
 class TestConflationOfIssuesOn12NeighbourFollowing:
