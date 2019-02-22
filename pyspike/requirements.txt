@@ -1,0 +1,8 @@
+colorlover
+networkx
+pandas
+plotly
+pytest
+scipy
+sacred
+matplotlib
