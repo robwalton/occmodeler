@@ -24,12 +24,17 @@ def generate_sums_by_state_figure(places_path: Path, run_id=None):
     for state_name in ordered_state_list:
         color = color_dict[state_name]
         df = non_coloured_sums.query(f"name == '{state_name}'")
+        df = df[df['count'].diff() != 0]
         data.append(
             go.Scatter(
                 name=render_name(state_name),
                 x=df['time'],
                 y=df['count'],
-                line=dict(color=color)
+                line=dict(
+                    color=color,
+                    # shape='hv'
+                ),
+                mode='lines+markers',
             )
         )
     title = f"Non coloured sums for run {run_id}" if run_id else "Non coloured sums"
@@ -37,11 +42,19 @@ def generate_sums_by_state_figure(places_path: Path, run_id=None):
     layout = go.Layout(
         title=title,
         yaxis=dict(title='count'),
-        xaxis=dict(title='time')
+        xaxis=dict(
+            title='time',
+            rangeslider=dict(
+                visible=True
+            ),
+        ),
+        clickmode='event+select',
+
     )
 
-    fig = go.Figure(data=data, layout=layout)
-    return fig
+    # fig = go.Figure(data=data, layout=layout)
+    # return fig
+    return dict(data=data, layout=layout)
     # url = py.plot(fig)
 
 
