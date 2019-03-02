@@ -20,7 +20,12 @@ import pyspike
 from pyspike.util import render_name, check_medium_graph
 
 
-def generate_place_change_events(df):
+def generate_place_increased_events(df):
+    '''
+
+    :param df:
+    :return:
+    '''
     df.sort_values(by=['time'])
     change_frame_list = []
 
@@ -33,7 +38,7 @@ def generate_place_change_events(df):
 
     # concatenate
     df_out = pd.concat(change_frame_list)
-    del df_out['count']
+    df_out['count']
     df_out['num'] = pd.to_numeric(df['num'], downcast='integer')
 
     return df_out.sort_values(by=['time', 'name', 'num'])

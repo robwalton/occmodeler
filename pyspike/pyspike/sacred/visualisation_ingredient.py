@@ -32,7 +32,7 @@ def visualise_temporal_graph(places_path: Path, transitions_path: Path, medium_g
     places = pyspike.tidydata.prepend_tidy_frame_with_tstep(places)
     transitions = pyspike.tidydata.prepend_tidy_frame_with_tstep(transitions)
 
-    place_change_events = pyspike.temporal.generate_place_change_events(places)
+    place_change_events = pyspike.temporal.generate_place_increased_events(places)
     transition_events = pyspike.temporal.generate_transition_events(transitions)
 
     causal_graph = pyspike.temporal.generate_causal_graph(

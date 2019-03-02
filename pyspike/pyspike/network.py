@@ -196,6 +196,8 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
         places, medium_layout, 0, ordered_state_list, color_dict, diff_only=False, num_runs=num_runs,
         place_offsets_dict=place_offsets_dict)
 
+    # Remove all lines in places which are duplicate of those before
+
     tstep_list = places.tstep.unique()
     t_list = places['time'].unique()
     assert len(tstep_list) == len(t_list)
