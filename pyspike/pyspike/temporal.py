@@ -6,6 +6,8 @@ import networkx as nx
 import pandas as pd
 import numpy as np
 import colorlover as cl
+import dash_core_components as dcc
+
 
 
 import pyspike.model
@@ -26,7 +28,7 @@ def generate_place_change_events(df):
         for state_name in df.name.unique():
             df_num_name = df[(df.num == num) & (df.name == state_name)]
             df_num_name_changed = df_num_name[df_num_name['count'].diff() != 0]
-            df_num_name_entered = df_num_name_changed[df_num_name_changed['count'] == 1]
+            df_num_name_entered = df_num_name_changed[df_num_name_changed['count'] > 0]  #  chance will go up > 1
             change_frame_list.append(df_num_name_entered)
 
     # concatenate
@@ -131,7 +133,8 @@ class Style(Enum):
 REVERSE_BARRED_ITEMS = False
 
 def generate_causal_graph_figure(
-        causal_graph, medium_graph, medium_layout=None, z_scale=.2, run_id=None, style=Style.ORIG):
+        causal_graph, medium_graph, medium_layout=None, z_scale=1, run_id=None, style=Style.ORIG,
+        return_dash_graph=False):
     # TODO: the z scale has no effect as plotly autofits entire structure
     # TODO: switch time to x axis?
     # determine state names and colours
@@ -210,8 +213,12 @@ def generate_causal_graph_figure(
         edge_trace_list.append(
             generate_edge_trace(neighbour_output_edge_list, color, medium_layout_for_state, t_to_z, state_name, style=style)
         )
-    fig = render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id)
-    return fig
+
+    if return_dash_graph:
+        fig_or_graph = create_dash_graph(edge_trace_list, medium_edge_trace, node_trace_list, run_id)
+    else:
+        fig_or_graph = render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id)
+    return fig_or_graph
 
 
 def render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id=None):
@@ -230,6 +237,23 @@ def render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id=None
         )
     ))
     return fig
+
+def create_dash_graph(edge_trace_list, medium_edge_trace, node_trace_list, run_id=None):
+    title = f"Temporal graph for run {run_id}" if run_id else "Temporal graph"
+    g = dcc.Graph(dict(
+        data=[medium_edge_trace] + node_trace_list + edge_trace_list,
+        layout=dcc.Layout(
+            title=title,
+            # showlegend=False,
+            hovermode='closest',
+            scene=dict(
+                xaxis=NOAXIS,
+                yaxis=NOAXIS,
+                zaxis=NOAXIS
+            )
+        )
+    ))
+    return g
 
 
 def generate_occasion_trace(occasion_list, color, medium_layout, t_to_z):
