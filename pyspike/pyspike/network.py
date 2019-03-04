@@ -5,7 +5,7 @@ import numpy as np
 import plotly.graph_objs as go
 
 import pyspike
-from pyspike import tidydata
+from pyspike import tidydata, temporal
 from pyspike.util import render_name
 
 
@@ -19,11 +19,11 @@ def render_plot(medium_edge_trace, initial_node_traces, frames=[], tstep_for_eac
         'xanchor': 'left',
         'currentvalue': {
             'font': {'size': 20},
-            'prefix': 'tstep: ',
+            'prefix': 't: ',
             'visible': True,
             'xanchor': 'right'
         },
-        'transition': {'duration': 0, 'easing': 'linear'},
+        'transition': {'easing': 'linear'},# removed duration: 0
         'pad': {'b': 10, 't': 50},
         'len': 0.9,
         'x': 0.1,
@@ -198,38 +198,46 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
 
     # Remove all lines in places which are duplicate of those before
 
-    tstep_list = places.tstep.unique()
-    t_list = places['time'].unique()
-    assert len(tstep_list) == len(t_list)
-    # start, stop, step = tidydata.determine_time_range_of_data_frame(places)
-    tstep_list.sort()
-    # tstep_list = tstep_list[0:60]
-    # trace_names = [render_name(n) for n in ordered_state_list]
-    frames = []
-    sliders_step_list = []  # one per frame
-    places.sort_values('num', inplace=True)
-    for tstep, t in zip(tstep_list, t_list):
-        frame_data = _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_state_list, color_dict,
+    place_changes = temporal.filter_place_changed_events(places)
+
+
+    unique_tstep_list = place_changes.tstep.unique()
+    unique_t_list = place_changes['time'].unique()
+    complete_t_list = places['time'].unique()
+    assert len(unique_tstep_list) == len(unique_t_list)
+
+    unique_tstep_list.sort()
+    tstep_number_of_repeated_frames = np.diff(unique_tstep_list).tolist()
+    unique_t_list.sort()
+    frame_list = []
+    slider_step_list = []  # one per frame
+    place_changes.sort_values('num', inplace=True)
+    for tstep, t, repeated_frames in zip(unique_tstep_list, unique_t_list, tstep_number_of_repeated_frames):
+        frame_data = _generate_plotly_node_data_trace_list(place_changes, medium_layout, tstep, ordered_state_list, color_dict,
                                                            diff_only=True, num_runs=num_runs)
         num_traces = len(ordered_state_list)
         assert len(frame_data) == num_traces
-        frames.append(
-            {'data': frame_data,
-             'name': str(int(tstep)),
-             'traces': list(range(1, 1 + num_traces))})  # Leave first (medium) trace alone
-        slider_step = {
-            'args': [
-                [int(tstep)],
-                {
-                    'frame': {'duration': 0, 'redraw': False, 'easing': 'linear'},
-                    'mode': 'immediate'
-                }
-            ],
-            'label': str(t),
-            'method': 'animate',
-        }
 
-        sliders_step_list.append(slider_step)
+        for t_step_index in range(tstep, tstep + repeated_frames):
+            frame_list.append({
+                'data': frame_data,
+                'name': str(int(t_step_index)),
+                'traces': list(range(1, 1 + num_traces))
+            })
+
+            slider_step_list.append({
+                'args': [
+                    [str(int(t_step_index))],
+                    {
+                        'frame': {'duration': 100, 'redraw': False, 'easing': 'linear'},
+                        'mode': 'immediate'
+                    }
+                ],
+                'label': str(complete_t_list[t_step_index]),
+                'value': str(complete_t_list[t_step_index]),
+                'method': 'animate',
+            })
+
     # print(f"generate_network_animation_figure_with_slider() ran in {time.time() - start_time} s")
-    fig = render_plot(medium_edge_trace, initial_node_traces, frames, tstep_list, sliders_step_list, run_id)
+    fig = render_plot(medium_edge_trace, initial_node_traces, frame_list, unique_tstep_list, slider_step_list, run_id)
     return fig

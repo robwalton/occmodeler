@@ -22,9 +22,9 @@ from pyspike.util import render_name, check_medium_graph
 
 def generate_place_increased_events(df):
     '''
-
-    :param df:
-    :return:
+    
+    :param df: 
+    :return: 
     '''
     df.sort_values(by=['time'])
     change_frame_list = []
@@ -38,7 +38,34 @@ def generate_place_increased_events(df):
 
     # concatenate
     df_out = pd.concat(change_frame_list)
-    df_out['count']
+    del df_out['count']  # not required for current application and complicates tests
+    df_out['num'] = pd.to_numeric(df['num'], downcast='integer')
+
+    return df_out.sort_values(by=['time', 'name', 'num'])
+
+
+def filter_place_changed_events(df):
+    '''
+
+    :param df:
+    :return:
+    '''
+    df.sort_values(by=['time'])
+    change_frame_list = []
+    tstep_set = set()
+    for num in df.num.unique():
+        for state_name in df.name.unique():
+            df_num_name = df[(df.num == num) & (df.name == state_name)]
+            df_num_name_changed = df_num_name[df_num_name['count'].diff() != 0]
+            # df_num_name_entered = df_num_name_changed[df_num_name_changed['count'] > 0]  # chance will go up > 1
+            tstep_set.update(set(df_num_name_changed['tstep']))
+            # change_frame_list.append(df_num_name_changed)
+
+    tstep_list = list(tstep_set)
+    # tstep_list.sort()
+
+    df_out = df[df['tstep'].isin(tstep_list)]
+    # del df_out['count']  # not required for current application and complicates tests
     df_out['num'] = pd.to_numeric(df['num'], downcast='integer')
 
     return df_out.sort_values(by=['time', 'name', 'num'])
