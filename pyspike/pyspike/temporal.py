@@ -66,7 +66,7 @@ def filter_place_changed_events(df):
 
     df_out = df[df['tstep'].isin(tstep_list)]
     # del df_out['count']  # not required for current application and complicates tests
-    df_out['num'] = pd.to_numeric(df['num'], downcast='integer')
+    # df_out['num'] = pd.to_numeric(df_out['num'], downcast='integer')
 
     return df_out.sort_values(by=['time', 'name', 'num'])
 
@@ -246,10 +246,7 @@ def generate_causal_graph_figure(
             generate_edge_trace(neighbour_output_edge_list, color, medium_layout_for_state, t_to_z, state_name, style=style)
         )
 
-    if return_dash_graph:
-        fig_or_graph = create_dash_graph(edge_trace_list, medium_edge_trace, node_trace_list, run_id)
-    else:
-        fig_or_graph = render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id)
+    fig_or_graph = render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id)
     return fig_or_graph
 
 
