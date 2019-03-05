@@ -26,3 +26,5 @@ RUN_100 = Path(__file__).parent / 'run_100'
 RUN_100_PLACES = RUN_100 / 'places.csv'
 RUN_100_TRANSITIONS = RUN_100 / 'transitions.csv'
 RUN_100_GML = RUN_100 / 'tos-network.gml'
+
+RUN_180 = Path(__file__).parent / '180'

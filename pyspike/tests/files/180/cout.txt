@@ -1,0 +1,128 @@
+INFO - Spike run - Running command 'main'
+INFO - Spike run - Started run with ID "180"
+INFO - main - Resource: /var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpdsibacc6/one_plus_two_neighbour_diffusion-on-two-community.candl
+INFO - main - Resource: _spike/input/conf.spc
+INFO - spike.call_spike - Calling: ['~/bin/spike exe -f _spike/input/conf.spc']
+
+CLI parsed successfully
+Error! Expecting 
+file parsed successfully
+ImportCmd:  load -f /var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpdsibacc6/one_plus_two_neighbour_diffusion-on-two-community.candl
+CLI parsed successfully
+BOUNDERY: 0
+REVERSIBLE: 0
+/var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpdsibacc6/one_plus_two_neighbour_diffusion-on-two-community.candl
+one_plus_two_neighbour_diffusionontwocommunity
+ConfPlaces
+ConfConstants
+CLI parsed successfully
+===============================
+Start unfolding
+
+Unfolding complete |P|=28|T|=300|A|=1136
+Time for unfolding: 0m 0.484sec
+
+ConfObservers
+CLI parsed successfully
+Run Sim
+from SP: blank
+0
+0.01
+10
+
+Runs: 1
+
+SimThreads: 4
+
+SimResults
+
+iCurrentRunCount: 1
+
+iResultPoints: 1000
+
+vvdPlacesResutls: 1002
+
+EXPORTS
+_spike/output/places.csv
+.*
+PLACES
+
+COLORS
+
+_spike/output/transitions.csv
+.*
+TRANSITIONS
+
+COLORS
+ImportCmd:  sim INFO - main - Artifact: _spike/output/places.csv
+INFO - main - Artifact: _spike/output/transitions.csv
+INFO - main - * Visualising temporal network *
+str(medium_gml_path): /var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpdsibacc6/two-community.gml
+{0: [0.69217614, -0.08936685], 1: [0.88684588, -0.21683806], 2: [0.74811776, -0.361906], 3: [0.88586679, -0.57842461], 4: [0.56674439, -0.59722088], 5: [0.5637971, -0.39880716], 6: [0.36828676, -0.16369905], 7: [0.0, 0.0], 8: [-0.29597752, 0.08424162], 9: [-0.45945856, -0.08909171], 10: [-0.65118034, 0.17981018], 11: [-0.40931661, 0.1908196], 12: [-0.33473102, 0.35073648], 13: [-0.11943313, 0.32944159]}
+xy:  [0.69217614, -0.08936685]
+<class 'list'>
+xy:  [0.88684588, -0.21683806]
+<class 'list'>
+xy:  [0.74811776, -0.361906]
+<class 'list'>
+xy:  [0.88586679, -0.57842461]
+<class 'list'>
+xy:  [0.56674439, -0.59722088]
+<class 'list'>
+xy:  [0.5637971, -0.39880716]
+<class 'list'>
+xy:  [0.36828676, -0.16369905]
+<class 'list'>
+xy:  [0.0, 0.0]
+<class 'list'>
+xy:  [-0.29597752, 0.08424162]
+<class 'list'>
+xy:  [-0.45945856, -0.08909171]
+<class 'list'>
+xy:  [-0.65118034, 0.17981018]
+<class 'list'>
+xy:  [-0.40931661, 0.1908196]
+<class 'list'>
+xy:  [-0.33473102, 0.35073648]
+<class 'list'>
+xy:  [-0.11943313, 0.32944159]
+<class 'list'>
+xy:  [0.69217614, -0.08936685]
+<class 'list'>
+xy:  [0.88684588, -0.21683806]
+<class 'list'>
+xy:  [0.74811776, -0.361906]
+<class 'list'>
+xy:  [0.88586679, -0.57842461]
+<class 'list'>
+xy:  [0.56674439, -0.59722088]
+<class 'list'>
+xy:  [0.5637971, -0.39880716]
+<class 'list'>
+xy:  [0.36828676, -0.16369905]
+<class 'list'>
+xy:  [0.0, 0.0]
+<class 'list'>
+xy:  [-0.29597752, 0.08424162]
+<class 'list'>
+xy:  [-0.45945856, -0.08909171]
+<class 'list'>
+xy:  [-0.65118034, 0.17981018]
+<class 'list'>
+xy:  [-0.40931661, 0.1908196]
+<class 'list'>
+xy:  [-0.33473102, 0.35073648]
+<class 'list'>
+xy:  [-0.11943313, 0.32944159]
+<class 'list'>
+INFO - main - Causal graph: /Users/walton/Documents/DPhil/proof-of-concept/causal_graph.html
+INFO - main - * Visualising network animation with slider *
+{'a': [0, 0], 'b': [0, 0]}
+INFO - main - Animation: /Users/walton/Documents/DPhil/proof-of-concept/network_animation_with_slider.html
+INFO - main - Plotting counts by time
+INFO - main - Non-coloured counts path: /Users/walton/Documents/DPhil/proof-of-concept/Non-coloured-counts.html
+INFO - main - Artifact: /Users/walton/Documents/DPhil/proof-of-concept/causal_graph.html
+INFO - main - Artifact: /Users/walton/Documents/DPhil/proof-of-concept/network_animation_with_slider.html
+INFO - main - Artifact: /Users/walton/Documents/DPhil/proof-of-concept/Non-coloured-counts.html
+INFO - main - Run ID: 180
+INFO - Spike run - Completed after 0:01:04

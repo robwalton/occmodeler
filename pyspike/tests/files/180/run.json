@@ -1,0 +1,127 @@
+{
+  "artifacts": [
+    "places.csv",
+    "transitions.csv",
+    "causal_graph.html",
+    "network_animation_with_slider.html",
+    "Non-coloured-counts.html"
+  ],
+  "command": "main",
+  "experiment": {
+    "base_dir": "/Users/walton/Documents/DPhil/proof-of-concept/src/pyspike/pyspike/sacred",
+    "dependencies": [
+      "networkx==2.2",
+      "numpy==1.15.4",
+      "plotly==3.4.2",
+      "sacred==0.7.4"
+    ],
+    "mainfile": "call.py",
+    "name": "Spike run",
+    "repositories": [
+      {
+        "commit": "ada35759b384c9946037a836e45e3060f9585fa0",
+        "dirty": true,
+        "url": "git://Users/walton/Documents/DPhil/proof-of-concept"
+      },
+      {
+        "commit": "ada35759b384c9946037a836e45e3060f9585fa0",
+        "dirty": true,
+        "url": "git://Users/walton/Documents/DPhil/proof-of-concept"
+      },
+      {
+        "commit": "ada35759b384c9946037a836e45e3060f9585fa0",
+        "dirty": true,
+        "url": "git://Users/walton/Documents/DPhil/proof-of-concept"
+      },
+      {
+        "commit": "ada35759b384c9946037a836e45e3060f9585fa0",
+        "dirty": true,
+        "url": "git://Users/walton/Documents/DPhil/proof-of-concept"
+      },
+      {
+        "commit": "ada35759b384c9946037a836e45e3060f9585fa0",
+        "dirty": true,
+        "url": "git://Users/walton/Documents/DPhil/proof-of-concept"
+      },
+      {
+        "commit": "ada35759b384c9946037a836e45e3060f9585fa0",
+        "dirty": true,
+        "url": "git://Users/walton/Documents/DPhil/proof-of-concept"
+      }
+    ],
+    "sources": [
+      [
+        "../../../papers/websci19/experiments.py",
+        "_sources/experiments_d7ebcf00a437bddb09da95cdbbe4484b.py"
+      ],
+      [
+        "__init__.py",
+        "_sources/__init___642ff8283152de88d8e4d23ead124af5.py"
+      ],
+      [
+        "call.py",
+        "_sources/call_1ede0cc98a59766b3d4b40abb30476d6.py"
+      ],
+      [
+        "candl_ingredient.py",
+        "_sources/candl_ingredient_06dd8dd488c182725253dc7babe13f12.py"
+      ],
+      [
+        "spike_ingredient.py",
+        "_sources/spike_ingredient_5d4526727c1e3bf44d4c83ba9acef93a.py"
+      ],
+      [
+        "visualisation_ingredient.py",
+        "_sources/visualisation_ingredient_58bfeb11876e8b1df2562029315eaeee.py"
+      ]
+    ]
+  },
+  "heartbeat": "2019-02-12T22:06:45.414694",
+  "host": {
+    "ENV": {},
+    "cpu": "Intel(R) Core(TM) i7-5557U CPU @ 3.10GHz",
+    "hostname": "mb",
+    "os": [
+      "Darwin",
+      "Darwin-18.2.0-x86_64-i386-64bit"
+    ],
+    "python_version": "3.7.1"
+  },
+  "meta": {
+    "command": "main",
+    "options": {
+      "--beat_interval": null,
+      "--capture": null,
+      "--comment": null,
+      "--debug": false,
+      "--enforce_clean": false,
+      "--file_storage": null,
+      "--force": false,
+      "--help": false,
+      "--loglevel": null,
+      "--mongo_db": null,
+      "--name": null,
+      "--pdb": false,
+      "--print_config": false,
+      "--priority": null,
+      "--queue": false,
+      "--sql": null,
+      "--tiny_db": null,
+      "--unobserved": false
+    }
+  },
+  "resources": [
+    [
+      "/var/folders/rb/z1vh8mr52xvc_y0yx4bw20jh0000gn/T/tmpdsibacc6/one_plus_two_neighbour_diffusion-on-two-community.candl",
+      "/Users/walton/Documents/DPhil/proof-of-concept/runs/_resources/one_plus_two_neighbour_diffusion-on-two-community_5fcb06a1856eb594e21b4663c7aa95b1.candl"
+    ],
+    [
+      "/Users/walton/Documents/DPhil/proof-of-concept/_spike/input/conf.spc",
+      "/Users/walton/Documents/DPhil/proof-of-concept/runs/_resources/conf_426ce2b3a5d3b0ded2ff1439d2527716.spc"
+    ]
+  ],
+  "result": null,
+  "start_time": "2019-02-12T22:05:41.390738",
+  "status": "COMPLETED",
+  "stop_time": "2019-02-12T22:06:45.411844"
+}
