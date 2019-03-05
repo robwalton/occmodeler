@@ -11,6 +11,7 @@ from pyspike.util import render_name
 
 OPACITY = 0.5
 
+# TODO: Nothing to see hear. Reconcile this file forked from network.py !
 
 def _generate_medium_edge_trace(medium_graph, medium_layout):
     edge_x = []
@@ -116,7 +117,7 @@ def _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_
     # return data
 
 
-def generate_network_figure(places, medium_graph, medium_layout=None, num_runs=1, t=0.):
+def generate_network_figure(places, medium_graph, sacred_run, t):
 
 
 
@@ -126,12 +127,11 @@ def generate_network_figure(places, medium_graph, medium_layout=None, num_runs=1
 
 
     # Create initial edge trace to show layout
-    if not medium_layout:
-        pos = nx.get_node_attributes(medium_graph, 'pos')
-        if pos:
-            medium_layout = pos
-        else:
-            medium_layout = nx.spring_layout(medium_graph, dim=2)
+    pos = nx.get_node_attributes(medium_graph, 'pos')
+    if pos:
+        medium_layout = pos
+    else:
+        medium_layout = nx.spring_layout(medium_graph, dim=2)
 
     medium_edge_trace = _generate_medium_edge_trace(
         medium_graph, medium_layout)
@@ -139,14 +139,28 @@ def generate_network_figure(places, medium_graph, medium_layout=None, num_runs=1
     if 'offsets' in medium_graph.graph:
         # print(medium_graph.graph['offsets'])
         place_offsets_dict = medium_graph.graph['offsets']
-
     else:
         place_offsets_dict = {}
 
-    # find step for time t
-    places_at_time_t = places.query('time == ' + str(t))
-    tstep = places_at_time_t['tstep'].iloc[0]
+    sim_args = sacred_run.config['spike']['sim_args']
+    num_runs = sim_args['runs']
+    t_start = sim_args['interval']['start'],
+    t_step = sim_args['interval']['step'],
 
+
+    # TODO: We need to do this but why?
+    if isinstance(t_start, tuple):
+        t_start = t_start[0]
+
+    if isinstance(t_step, tuple):
+        t_step = t_step[0]
+
+
+    # find step for time t
+    tstep = round((t - t_start) / t_step)
+    # places_at_time_t = places[np.isclose(places['time'], t)]
+    # tstep = places_at_time_t['tstep'].iloc[0]
+    print('tstep:', tstep)
     initial_node_traces = _generate_plotly_node_data_trace_list(
         places, medium_layout, tstep, ordered_state_list, color_dict, num_runs=num_runs,
         place_offsets_dict=place_offsets_dict)
@@ -179,6 +193,4 @@ def generate_network_figure(places, medium_graph, medium_layout=None, num_runs=1
         ),
 
     )
-
-
     return fig
