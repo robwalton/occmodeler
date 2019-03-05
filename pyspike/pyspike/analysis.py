@@ -11,10 +11,15 @@ import pyspike.util
 from pyspike.util import render_name
 
 
-def generate_sums_by_state_figure(places_path: Path, run_id=None):
-
-    assert places_path.exists()
-    places = tidydata.read_csv(str(places_path), 'place', drop_non_coloured_sums=False)
+def generate_sums_by_state_figure(places_path: Path = None, places=None, run_id=None):
+    if places_path:
+        assert not places
+        assert places_path.exists()
+        places = tidydata.read_csv(str(places_path), 'place', drop_non_coloured_sums=False)
+    elif places is not None:
+        assert not places_path
+    else:
+        raise ValueError("Only one of places_path or places should be set")
     non_coloured_sums = places[places.num.isna()]
 
     state_name_list = list(non_coloured_sums['name'].unique())
