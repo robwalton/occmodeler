@@ -2,8 +2,10 @@ import pytest
 
 import networkx as nx
 
+import occ.model.colour_functions
+import occ.model.transitions
 from occ import model
-from occ.model import graph_to_is_neighbour_func, graph_to_are_both_neighbours_func
+from occ.model.colour_functions import graph_to_is_neighbour_func, graph_to_are_both_neighbours_func
 
 
 @pytest.fixture()
@@ -49,18 +51,18 @@ ARE_BOTH_NEIGHBOURS_CANDLE = (
 class TestFunctions:
 
     def test_is_neighbour_candl(self, medium_graph):
-        f = model.IsNeighbour()
+        f = occ.model.colour_functions.IsNeighbour()
         assert f.to_candl(medium_graph) == IS_NEIGHBOUR_CANDL
 
     def test_are_both_neighbours_candl(self, medium_graph):
-        f = model.AreBothNeighbours()
+        f = occ.model.colour_functions.AreBothNeighbours()
         assert f.to_candl(medium_graph) == ARE_BOTH_NEIGHBOURS_CANDLE
 
 
 class TestTransitions:
 
     def test_follow_neighbour_to_candl_with_mass_action(self, place_a, place_b):
-        t = model.FollowNeighbour(place_a, place_b, rate='MassAction(1)')
+        t = occ.model.transitions.FollowNeighbour(place_a, place_b, rate='MassAction(1)')
         assert t.to_candl() == """\
   f1ab
  {[is_neighbour(u, n1)]}
@@ -70,7 +72,7 @@ class TestTransitions:
     ;"""
 
     def test_follow_neighbour_to_candl_with_rate_1(self, place_a, place_b):
-        t = model.FollowNeighbour(place_a, place_b)
+        t = occ.model.transitions.FollowNeighbour(place_a, place_b)
         assert t.to_candl() == """\
   f1ab
  {[is_neighbour(u, n1)]}
@@ -81,7 +83,7 @@ class TestTransitions:
 
     def test_follow_neighbour_to_candl_with_rate_1_enabled_by_local(self, place_a, place_b):
         place_e = model.Place(model.Unit, 'e')
-        t = model.FollowNeighbour(place_a, place_b, enabled_by_local=place_e)
+        t = occ.model.transitions.FollowNeighbour(place_a, place_b, enabled_by_local=place_e)
         assert t.to_candl() == """\
   f1Leab
  {[is_neighbour(u, n1)]}
@@ -91,7 +93,7 @@ class TestTransitions:
     ;"""
 
     def test_follow_neighbour_to_candl_with_rate_1_use_read_arc(self, place_a, place_b):
-        t = model.FollowNeighbour(place_a, place_b, use_read_arc=True)
+        t = occ.model.transitions.FollowNeighbour(place_a, place_b, use_read_arc=True)
         assert t.to_candl() == """\
   f1ab
  {[is_neighbour(u, n1)]}
@@ -101,7 +103,7 @@ class TestTransitions:
     ;"""
 
     def test_follow_neighbour_to_candl_with_rate_name_prefix(self, place_a, place_b):
-        t = model.FollowNeighbour(place_a, place_b, name_prefix='xyz')
+        t = occ.model.transitions.FollowNeighbour(place_a, place_b, name_prefix='xyz')
         assert t.to_candl() == """\
   xyzf1ab
  {[is_neighbour(u, n1)]}
@@ -111,7 +113,7 @@ class TestTransitions:
     ;"""
 
     def test_follow_two_neighbours_to_candl(self, place_a, place_b):
-        t = model.FollowTwoNeighbours(place_a, place_b)
+        t = occ.model.transitions.FollowTwoNeighbours(place_a, place_b)
         assert t.to_candl() == """\
   f2ab
  {[are_both_neighbours(u, n1, n2)]}
@@ -122,7 +124,7 @@ class TestTransitions:
 
     def test_follow_two_neighbours_to_candl_with_rate_1_enabled_by_local(self, place_a, place_b):
         place_e = model.Place(model.Unit, 'e')
-        t = model.FollowTwoNeighbours(place_a, place_b, enabled_by_local=place_e)
+        t = occ.model.transitions.FollowTwoNeighbours(place_a, place_b, enabled_by_local=place_e)
         assert t.to_candl() == """\
   f2Leab
  {[are_both_neighbours(u, n1, n2)]}
@@ -132,7 +134,7 @@ class TestTransitions:
     ;"""
 
     def test_modulated_internal(self, place_a, place_b, place_e):
-        t = model.ModulatedInternal(place_a, place_b, place_e)
+        t = occ.model.transitions.ModulatedInternal(place_a, place_b, place_e)
         assert t.to_candl() == """\
   mieab
     : [e >= {u}]
@@ -142,7 +144,7 @@ class TestTransitions:
 
     def test_modulated_internal_with_two(self, place_a, place_b, place_e):
         place_f = model.Place(model.Unit, 'f', '0`0')
-        t = model.ModulatedInternal(place_a, place_b, place_e, activate2=place_f)
+        t = occ.model.transitions.ModulatedInternal(place_a, place_b, place_e, activate2=place_f)
         assert t.to_candl() == """\
   mi2efab
     : [e >= {u}] & [f >= {u}]
@@ -151,7 +153,7 @@ class TestTransitions:
     ;"""
 
     def test_external_to_candl(self, place_a, place_b):
-        t = model.External(place_a, place_b, 2, [15, 16])
+        t = occ.model.transitions.External(place_a, place_b, 2, [15, 16])
         assert t.to_candl() == """\
   extab
     :
@@ -162,10 +164,8 @@ class TestTransitions:
 
 def test_integration(medium_graph):
 
-    from pyspike.model import UnitModel, u, n1, n2, Place, Unit
-    from occ.model import FollowNeighbour as follow1
-    from occ.model import FollowTwoNeighbours as follow2
-    from occ.model import External as ext
+    from occ.model import UnitModel, u, n1, n2, Place, Unit
+    from occ.model import follow1, follow2, ext
 
     m = UnitModel(
         name='last_registered_two_neighbours_required',
@@ -269,7 +269,7 @@ class TestUnitModel:
 
     # TODO: many tests here should be moved to pyspike/tests/test_model.py
     def test_add_transition_with_new_places(self, m, place_a, place_b):
-        t = model.External(place_a, place_b, 1, [10, 15])
+        t = occ.model.transitions.External(place_a, place_b, 1, [10, 15])
         m.add_transition(t)
         assert m.places == [place_a, place_b]
         assert m.functions == []  # model.External has no guard function
@@ -278,17 +278,17 @@ class TestUnitModel:
     def test_add_transition_with_new_function(self, m, place_a, place_b):
         m.variables.append(model.n2)
         m.add_places_from([place_a, place_b])
-        t = model.FollowTwoNeighbours(place_a, place_b)
+        t = occ.model.transitions.FollowTwoNeighbours(place_a, place_b)
         m.add_transition(t)
         assert m.places == [place_a, place_b]
         assert m.transitions == [t]
         print('t.guard_function:', t.guard_function)
-        assert m.functions == [model.AreBothNeighbours()]
+        assert m.functions == [occ.model.colour_functions.AreBothNeighbours()]
 
     def test_add_transition_with_duplicate_name_fails(self, m, place_a, place_b):
         m.variables.append(model.n2)
         m.add_places_from([place_a, place_b])
-        t = model.FollowTwoNeighbours(place_a, place_b)
+        t = occ.model.transitions.FollowTwoNeighbours(place_a, place_b)
         m.add_transition(t)
         with pytest.raises(ValueError):
             m.add_transition(t)
@@ -307,7 +307,7 @@ variables:
 """
 
     def test__colorfunctions_chunk(self, m, medium_graph):
-        m.functions = [model.IsNeighbour()]
+        m.functions = [occ.model.colour_functions.IsNeighbour()]
         assert m._colorfunctions_chunk(medium_graph) == (
                 'colorfunctions:\n' + IS_NEIGHBOUR_CANDL + '\n')
 
@@ -321,8 +321,8 @@ discrete:
 """
 
     def test__transitions_chunk(self, m, place_a, place_b):
-        m.transitions = [model.FollowNeighbour(place_a, place_b),
-                         model.External(place_a, place_b, 2, [15, 16])]
+        m.transitions = [occ.model.transitions.FollowNeighbour(place_a, place_b),
+                         occ.model.transitions.External(place_a, place_b, 2, [15, 16])]
         assert m._transitions_chunk() == """\
 transitions:
   f1ab
