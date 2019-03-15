@@ -16,7 +16,7 @@ import occdash
 import pyspike
 import pyspike.temporal
 import occ.vis.analysis
-import pyspike.network_dash
+import occ.vis.network_dash
 from pyspike import tidydata, temporal
 from pyspike.sacred.sacredrun import SacredRun
 
@@ -181,7 +181,7 @@ def update_network_graph(run_id, t):
         return None
     changed_places = changed_places_df(run_id)
     changed_places.dropna(inplace=True)
-    figure = pyspike.network_dash.generate_network_figure(
+    figure = occ.vis.network_dash.generate_network_figure(
         changed_places, medium_graph(run_id), sacred_run(run_id), t)
     return figure
 

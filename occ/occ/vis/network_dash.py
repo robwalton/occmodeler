@@ -11,7 +11,7 @@ from pyspike.util import render_name
 
 OPACITY = 0.5
 
-# TODO: Nothing to see hear. Reconcile this file forked from network.py !
+# TODO: Nothing to see here. Reconcile this file forked from network.py !
 
 def _generate_medium_edge_trace(medium_graph, medium_layout):
     edge_x = []
