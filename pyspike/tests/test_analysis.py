@@ -3,7 +3,7 @@ import plotly.offline as py
 
 from pyspike.analysis import generate_sums_by_state_figure
 
-from tests.files import RUN_71_PLACES
+from occ_test_files import RUN_71_PLACES
 
 PLOT = True
 

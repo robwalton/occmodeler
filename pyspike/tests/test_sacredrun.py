@@ -2,7 +2,7 @@ from pprint import pprint
 
 from pyspike.sacred.sacredrun import SacredRun, sacredrun_to_json, json_to_sacredrun
 
-from .files import RUN_180
+from occ_test_files import RUN_180
 
 
 def test_sacredrun():

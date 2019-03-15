@@ -2,12 +2,11 @@ import pandas as pd
 import pytest
 import re
 
-
+import occ_test_files
 from pyspike import tidydata
 
 from pandas.util.testing import assert_frame_equal
 
-import tests.files
 from pyspike.tidydata import TRANSITION_COL_RE
 
 
@@ -125,21 +124,8 @@ class TestLoadTransitions:
         assert list(frame.columns) == ['time', 'type', 'name', 'unit', 'neighbour', 'neighbour2', 'count']
 
     def test_with_are_both_neighbours__func_used(self):
-        transitions = tidydata.read_csv(tests.files.RUN_90_TRANSITIONS, 'transition')
+        transitions = tidydata.read_csv(occ_test_files.files.RUN_90_TRANSITIONS, 'transition')
         log([transitions])
-
-
-if __name__ == '__main__':
-    raw_frame = pd.read_csv(tests.files.RUN_90_TRANSITIONS, delimiter=';')
-    frame = tidydata.tidy_frame(raw_frame, 'transition')
-
-
-
-# def test_determine_time_range_of_data_frame(big_example_frame):
-#     start, stop, step = tidydata.determine_time_range_of_data_frame(big_example_frame)
-#     assert start == 0
-#     assert stop == 4
-#     assert step == 1
 
 
 
