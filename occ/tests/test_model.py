@@ -3,6 +3,7 @@ import pytest
 import networkx as nx
 
 from occ import model
+from occ.model import graph_to_is_neighbour_func, graph_to_are_both_neighbours_func
 
 
 @pytest.fixture()
@@ -337,3 +338,69 @@ deterministic:
     : 2.0
     ;
 """
+
+
+def log(s):
+    print('---')
+    print(s)
+    print('---')
+
+
+class TestGraphToIsNeighbourFunc(object):
+
+    def test_empty(self):
+        g = nx.Graph()
+        g.add_nodes_from([1, 2, 3])
+        assert graph_to_is_neighbour_func(g) == ''
+
+    def test_pair(self):
+        g = nx.Graph()
+        g.add_edge(4, 5)
+        assert graph_to_is_neighbour_func(g) == '(x=4 & (y=5)) | (x=5 & (y=4))'
+
+    def test_four(self):
+        g = nx.Graph()
+        g.add_edge(1, 2)
+        g.add_edge(2, 3)
+        g.add_edge(3, 1)
+        g.add_edge(3, 4)
+        assert graph_to_is_neighbour_func(g) == '(x=1 & (y=2|y=3)) | (x=2 & (y=1|y=3)) | (x=3 & (y=1|y=2|y=4)) | (x=4 & (y=3))'
+
+    def test_six_loop(self):
+        g = nx.Graph()
+        for i in range(1, 6):
+            g.add_edge(i, i+1)
+        g.add_edge(6, 1)
+
+        assert graph_to_is_neighbour_func(g) == (
+                '(x=1 & (y=2|y=6)) | (x=2 & (y=1|y=3)) | '
+                '(x=3 & (y=2|y=4)) | (x=4 & (y=3|y=5)) | '
+                '(x=5 & (y=4|y=6)) | (x=6 & (y=1|y=5))')
+
+        print(graph_to_is_neighbour_func(g))
+
+    def test_12_loop(self):
+        g = nx.Graph()
+        for i in range(1, 12):
+            g.add_edge(i, i + 1)
+        g.add_edge(12, 1)
+
+        print()
+        print(graph_to_is_neighbour_func(g))
+        print()
+
+
+class TestGraphToAreBothNeighboursFunc(object):
+
+    def test_pair(self):
+        g = nx.Graph()
+        g.add_edge(4, 5)
+        assert graph_to_are_both_neighbours_func(g) == '(n1!=n2) & ((u=4 & (n1=5) & (n2=5)) | (u=5 & (n1=4) & (n2=4)))'
+
+    def test_four(self):
+        g = nx.Graph()
+        g.add_edge(1, 2)
+        g.add_edge(2, 3)
+        g.add_edge(3, 1)
+        g.add_edge(3, 4)
+        assert graph_to_are_both_neighbours_func(g) == '(n1!=n2) & ((u=1 & (n1=2|n1=3) & (n2=2|n2=3)) | (u=2 & (n1=1|n1=3) & (n2=1|n2=3)) | (u=3 & (n1=1|n1=2|n1=4) & (n2=1|n2=2|n2=4)) | (u=4 & (n1=3) & (n2=3)))'
