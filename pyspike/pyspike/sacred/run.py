@@ -1,9 +1,6 @@
-import json
-import tempfile
 import urllib
 from pathlib import Path
 
-import networkx as nx
 import plotly.offline as pl
 
 if __name__ == "__main__":
@@ -14,7 +11,7 @@ if __name__ == "__main__":
 from pyspike.sacred.spike_ingredient import prep_for_spike_call, call_spike
 from pyspike.sacred.candl_ingredient import generate_candl_file
 from pyspike.sacred.visualisation_ingredient import visualise_temporal_graph, visualise_network_animation
-from pyspike.analysis import generate_sums_by_state_figure
+from occ.vis.analysis import generate_sums_by_state_figure
 
 
 def main(ex, candl, spike, visualisation, log, run_id):

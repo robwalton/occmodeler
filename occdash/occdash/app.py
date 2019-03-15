@@ -7,10 +7,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import networkx
 import networkx as nx
-import pandas as pd
-import plotly.graph_objs as go
-from textwrap import dedent as d
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import json
 from flask_caching import Cache
 
@@ -18,7 +15,7 @@ from flask_caching import Cache
 import occdash
 import pyspike
 import pyspike.temporal
-import pyspike.analysis
+import occ.vis.analysis
 import pyspike.network_dash
 from pyspike import tidydata, temporal
 from pyspike.sacred.sacredrun import SacredRun
@@ -217,7 +214,7 @@ def update_place_count_graph(run_id):
     logging.info(f'Updating place-count-graph for run_id: {run_id}')
     if run_id is None:
         return None
-    return pyspike.analysis.generate_sums_by_state_figure(places=places_df(run_id))
+    return occ.vis.analysis.generate_sums_by_state_figure(places=places_df(run_id))
 
 
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 import plotly.offline as py
 
-from pyspike.analysis import generate_sums_by_state_figure
+from occ.vis.analysis import generate_sums_by_state_figure
 
 from occ_test_files import RUN_71_PLACES
 
