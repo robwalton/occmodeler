@@ -11,7 +11,7 @@ from dash.dependencies import Input, Output
 import json
 from flask_caching import Cache
 
-
+import occ.reduction.occasion_graph
 import occdash
 import pyspike
 import occ.vis.occasion_graph
@@ -266,10 +266,10 @@ def update_occasion_graph_graph(run_id):
     places = pyspike.tidydata.prepend_tidy_frame_with_tstep(places)
     transitions = pyspike.tidydata.prepend_tidy_frame_with_tstep(transitions)
 
-    place_change_events = occ.vis.occasion_graph.generate_place_increased_events(places)
-    transition_events = occ.vis.occasion_graph.generate_transition_events(transitions)
+    place_change_events = occ.reduction.occasion_graph.generate_place_increased_events(places)
+    transition_events = occ.reduction.occasion_graph.generate_transition_events(transitions)
 
-    occasion_graph = occ.vis.occasion_graph.generate_causal_graph(
+    occasion_graph = occ.reduction.occasion_graph.generate_causal_graph(
         place_change_events, transition_events, time_per_step=tstep)
 
     return occ.vis.occasion_graph.generate_causal_graph_figure(
@@ -337,7 +337,7 @@ def places_df(run_id):
 @cache.memoize()
 def changed_places_df(run_id):
     places = places_df(run_id)
-    place_changes = occasion_graph.filter_place_changed_events(places)
+    place_changes = occ.reduction.occasion_graph.filter_place_changed_events(places)
     place_changes.sort_values('tstep')
     return place_changes
     # return place_changes.to_json(orient='split')

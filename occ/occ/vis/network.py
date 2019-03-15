@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 import plotly.graph_objs as go
 
+import occ.reduction.occasion_graph
 import pyspike
 from occ.vis import occasion_graph
 from pyspike.util import render_name
@@ -196,7 +197,7 @@ def generate_network_animation_figure_with_slider(places, medium_graph, medium_l
 
     # Remove all lines in places which are duplicate of those before
 
-    place_changes = occasion_graph.filter_place_changed_events(places)
+    place_changes = occ.reduction.occasion_graph.filter_place_changed_events(places)
 
 
     unique_tstep_list = place_changes.tstep.unique()

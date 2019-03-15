@@ -1,123 +1,19 @@
 import networkx as nx
-import pandas as pd
-import pytest
-from pandas.util.testing import assert_frame_equal
-import matplotlib.pyplot as plt
 import plotly.offline as py
 
+import occ.reduction.occasion_graph
 from pyspike import tidydata
 from occ.vis import occasion_graph
 
-from occ.vis.occasion_graph import generate_place_increased_events, generate_transition_events, generate_causal_graph, Occasion, \
-    Style
+from occ.vis.occasion_graph import Style
+from occ.reduction.occasion_graph import generate_place_increased_events, generate_transition_events, \
+    generate_causal_graph, Occasion
 
 from occ_test_files import TRANSITIONS, PLACES
 import occ_test_files
 
+
 PLOT = True
-
-
-
-@pytest.fixture
-def big_example_frame():
-    in_rows = [
-        # step, time, type, name, num, count
-        [0, 0., 'place', 'a', 1, 1],
-        [0, 0., 'place', 'a', 2, 1],
-        [0, 0., 'place', 'b', 1, 0],
-        [0, 0., 'place', 'b', 2, 0],
-        #
-        [1, 1., 'place', 'a', 1, 1],
-        [1, 1., 'place', 'a', 2, 1],
-        [1, 1., 'place', 'b', 1, 0],
-        [1, 1., 'place', 'b', 2, 0],
-        #
-        [2, 2., 'place', 'a', 1, 0],
-        [2, 2., 'place', 'a', 2, 1],
-        [2, 2., 'place', 'b', 1, 1],
-        [2, 2., 'place', 'b', 2, 0],
-        #
-        [3, 3., 'place', 'a', 1, 0],
-        [3, 3., 'place', 'a', 2, 0],
-        [3, 3., 'place', 'b', 1, 1],
-        [3, 3., 'place', 'b', 2, 1],
-        #
-        [4, 4., 'place', 'a', 1, 1],
-        [4, 4., 'place', 'a', 2, 0],
-        [4, 4., 'place', 'b', 1, 0],
-        [4, 4., 'place', 'b', 2, 1],
-    ]
-    return pd.DataFrame(
-        in_rows, columns=['step', 'time', 'type', 'name', 'num', 'count'])
-
-
-def test_generate_state_change_frame(big_example_frame):
-
-
-    desired_rows = [
-        # 'step', 'time', 'type', 'name', 'num']
-        [0, 0., 'place', 'a', 1],
-        [0, 0., 'place', 'a', 2],
-        [2, 2., 'place', 'b', 1],
-        [3, 3., 'place', 'b', 2],
-        [4, 4., 'place', 'a', 1],
-
-    ]
-    desired_frame = pd.DataFrame(
-        desired_rows, columns=['step', 'time', 'type', 'name', 'num'])
-
-    desired_frame = desired_frame.sort_values(by=['time', 'num'])
-    desired_frame['num'] = pd.to_numeric(desired_frame['num'], downcast='integer')
-
-    actual_frame = occasion_graph.generate_place_increased_events(big_example_frame)
-    assert_frame_equal(desired_frame.reset_index(drop=True), actual_frame.reset_index(drop=True))
-
-
-def test_occasion_repr():
-
-    o = Occasion(unit=1, state='a', time=4.1)
-    assert repr(o) == 'a1@4.1'
-
-
-def test_generate_causal_graph_with_run_77():
-    g, place_change_events, transition_events = _load_run_77()
-
-    causal_graph = generate_causal_graph(
-        place_change_events, transition_events, 0.1)
-
-    if PLOT:
-        nx.draw(causal_graph, with_labels=True)
-        plt.show()
-    log('actual:', causal_graph.nodes)
-
-    O = Occasion
-    desired = [
-        O(0, 'a', 0.0), O(1, 'a', 0.0), O(2, 'a', 0.0), O(3, 'a', 0.0), O(4, 'a', 0.0), O(5, 'a', 0.0),
-        O(5, 'b', 2.0), O(0, 'b', 1.1), O(4, 'b', 3.0), O(3, 'b', 4.0), O(2, 'b', 5.1), O(1, 'b', 6.1)
-    ]
-
-    assert list(causal_graph.nodes) == desired
-    assert str(list(causal_graph.edges)) == "[(a1@0.0, b1@6.1), (a2@0.0, b2@5.1), (a3@0.0, b3@4.0), (a4@0.0, b4@3.0), (a5@0.0, b5@2.0), (b5@2.0, b4@3.0), (b0@1.1, b5@2.0), (b4@3.0, b3@4.0), (b3@4.0, b2@5.1), (b2@5.1, b1@6.1)]"
-
-
-def occ_pair(a, b):
-    # s of form a1@0.0
-    astate, aunit, atime = a[0], a[1], a[-3:]
-    bstate, bunit, btime = b[0], b[1], b[-3:]
-    return Occasion(aunit, astate, atime), Occasion(bunit, bstate, btime)
-
-
-def test_generate_causal_graph_with__are_both_neighbours__run_90_():
-    graph_medium, place_change_events, transition_events = _load_run_90()
-    log([transition_events])
-    causal_graph = generate_causal_graph(
-        place_change_events, transition_events, 0.1)
-
-    if PLOT:
-        nx.draw(causal_graph, with_labels=True)
-        plt.show()
-    assert str(causal_graph.nodes) == '[a2@0.0, a3@0.0, a4@0.0, b0@0.0, b1@0.0, b2@1.5, b3@2.5, b4@3.5]'
-    log('actual edges:', causal_graph.edges)
 
 
 class TestCausalPlotting(object):
@@ -137,11 +33,11 @@ class TestCausalPlotting(object):
 
     def test_extract_state_names(self):
         causal_graph, graph_medium = self._load_graph_77()
-        assert occasion_graph.extract_state_names_from_causal_graph(causal_graph) == {'a', 'b'}
+        assert occ.reduction.occasion_graph.extract_state_names_from_causal_graph(causal_graph) == {'a', 'b'}
 
     def test_extract_unit_numbers(self):
         causal_graph, graph_medium = self._load_graph_77()
-        assert occasion_graph.extract_unit_numbers_from_causal_graph(causal_graph) == set(range(6))
+        assert occ.reduction.occasion_graph.extract_unit_numbers_from_causal_graph(causal_graph) == set(range(6))
 
     def test_with_run_71(self):
 
