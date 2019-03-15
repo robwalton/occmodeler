@@ -1,6 +1,6 @@
 # %% Setup
 
-from pyspike.model import FollowNeighbour as follow1
+from occ.model import FollowNeighbour as follow1
 from pyspike.model import UnitModel, u, n1, n2, Unit, randomly_allocate_range_of_integers_between_lists, marking
 
 

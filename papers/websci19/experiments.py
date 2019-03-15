@@ -10,9 +10,7 @@ from pathlib import Path
 
 import pyspike
 from pyspike import tidydata
-from pyspike.model import FollowNeighbour as follow1
-from pyspike.model import FollowTwoNeighbours as follow2
-from pyspike.model import ModulatedInternal as modulated_internal #(source, target, rate)
+from model import FollowNeighbour as follow1, FollowTwoNeighbours as follow2, ModulatedInternal as modulated_internal
 from pyspike.model import UnitModel, u, n1, n2, Unit
 from pyspike.model import marking
 import plotly.offline as py

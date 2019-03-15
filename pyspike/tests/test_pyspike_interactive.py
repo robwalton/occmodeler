@@ -8,9 +8,7 @@ from pyspike.sacred import call
 from pyspike.sacred.call import run_experiment
 
 from pyspike.model import UnitModel, u, n1, n2, Unit
-from pyspike.model import FollowNeighbour as follow1
-from pyspike.model import FollowTwoNeighbours as follow2
-from pyspike.model import External as ext
+from occ.model import FollowNeighbour as follow1, FollowTwoNeighbours as follow2, External as ext
 
 PATH = Path(__file__)
 
