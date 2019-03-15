@@ -55,7 +55,7 @@ def run_experiment(unit_model: UnitModel, medium_graph: nx.Graph = None, medium_
     print('medium_gml:' + medium_gml)
     print('candl_path:' + candl_path)
 
-    # candl_args = dict(candl_template_path='', gml_path='')  # Not using this part so null  out
+    candl_args = dict(candl_template_path='', gml_path='')  # Not using this part so null  out
     spike_args = dict(model_path=candl_path,
                       sim_args=dict(interval=dict(start=start, step=step, stop=stop), runs=runs),
                       repeat_sim=repeat_sim)
@@ -65,10 +65,10 @@ def run_experiment(unit_model: UnitModel, medium_graph: nx.Graph = None, medium_
     # logger.setLevel(logging.CRITICAL)
     # ex.logger = logger
 
-    return ex.run(config_updates=dict(spike=spike_args, visualisation=visualisation_args))
+    return ex.run(config_updates=dict(candl=candl_args, spike=spike_args, visualisation=visualisation_args))
 
 
-ex = Experiment('Spike run', ingredients=[spike_ingredient, visualisation_ingredient])
+ex = Experiment('Spike run', ingredients=[spike_ingredient, candl_ingredient, visualisation_ingredient])
 
 @ex.automain
 def main(candl, spike, visualisation, _log, _run):
