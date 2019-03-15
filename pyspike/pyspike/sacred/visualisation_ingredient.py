@@ -1,13 +1,10 @@
-import os
-
 import networkx as nx
 from sacred import Ingredient
 
 import pyspike
 import pyspike.temporal
-import pyspike.network
+import occ.vis.network
 from pathlib import Path
-import plotly.offline as py
 
 from pyspike import tidydata
 
@@ -55,7 +52,7 @@ def visualise_network_animation(places_path: Path, medium_gml_path: Path, num_ru
     places = pyspike.tidydata.prepend_tidy_frame_with_tstep(places)
     medium_graph = nx.read_gml(str(medium_gml_path), destringizer=int)
 
-    fig = pyspike.network.generate_network_animation_figure_with_slider(
+    fig = occ.vis.network.generate_network_animation_figure_with_slider(
         places, medium_graph, run_id=run_id, num_runs=num_runs)
     return fig
     # plot_url = py.plot(fig,  filename='network_animation_with_slider.html')
