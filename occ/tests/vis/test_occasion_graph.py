@@ -5,9 +5,10 @@ from pandas.util.testing import assert_frame_equal
 import matplotlib.pyplot as plt
 import plotly.offline as py
 
-from pyspike import temporal, tidydata
+from pyspike import tidydata
+from occ.vis import occasion_graph
 
-from pyspike.temporal import generate_place_increased_events, generate_transition_events, generate_causal_graph, Occasion, \
+from occ.vis.occasion_graph import generate_place_increased_events, generate_transition_events, generate_causal_graph, Occasion, \
     Style
 
 from occ_test_files import TRANSITIONS, PLACES
@@ -68,7 +69,7 @@ def test_generate_state_change_frame(big_example_frame):
     desired_frame = desired_frame.sort_values(by=['time', 'num'])
     desired_frame['num'] = pd.to_numeric(desired_frame['num'], downcast='integer')
 
-    actual_frame = temporal.generate_place_increased_events(big_example_frame)
+    actual_frame = occasion_graph.generate_place_increased_events(big_example_frame)
     assert_frame_equal(desired_frame.reset_index(drop=True), actual_frame.reset_index(drop=True))
 
 
@@ -130,17 +131,17 @@ class TestCausalPlotting(object):
 
     def test_plot_causal_graph_with_run_77(self):
         causal_graph, graph_medium = self._load_graph_77()
-        fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium)
+        fig = occasion_graph.generate_causal_graph_figure(causal_graph, graph_medium)
         if PLOT:
             url = py.plot(fig)
 
     def test_extract_state_names(self):
         causal_graph, graph_medium = self._load_graph_77()
-        assert temporal.extract_state_names_from_causal_graph(causal_graph) == {'a', 'b'}
+        assert occasion_graph.extract_state_names_from_causal_graph(causal_graph) == {'a', 'b'}
 
     def test_extract_unit_numbers(self):
         causal_graph, graph_medium = self._load_graph_77()
-        assert temporal.extract_unit_numbers_from_causal_graph(causal_graph) == set(range(6))
+        assert occasion_graph.extract_unit_numbers_from_causal_graph(causal_graph) == set(range(6))
 
     def test_with_run_71(self):
 
@@ -163,7 +164,7 @@ class TestCausalPlotting(object):
         causal_graph = generate_causal_graph(
             place_change_events, transition_events, 0.1)
 
-        fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium, style=Style.ORIG)
+        fig = occasion_graph.generate_causal_graph_figure(causal_graph, graph_medium, style=Style.ORIG)
         if PLOT:
             url = py.plot(fig)
             print(url)
@@ -172,7 +173,7 @@ class TestCausalPlotting(object):
         graph_medium, place_change_events, transition_events = _load_run_90()
         causal_graph = generate_causal_graph(
             place_change_events, transition_events, 0.1)
-        fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium)
+        fig = occasion_graph.generate_causal_graph_figure(causal_graph, graph_medium)
         if PLOT:
             url = py.plot(fig)
             print(url)
@@ -181,7 +182,7 @@ class TestCausalPlotting(object):
         graph_medium, place_change_events, transition_events = _load_run_100()
         causal_graph = generate_causal_graph(
             place_change_events, transition_events, 0.1)
-        fig = temporal.generate_causal_graph_figure(causal_graph, graph_medium)
+        fig = occasion_graph.generate_causal_graph_figure(causal_graph, graph_medium)
         if PLOT:
             url = py.plot(fig)
             print(url)

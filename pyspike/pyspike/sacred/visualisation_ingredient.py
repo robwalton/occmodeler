@@ -2,7 +2,7 @@ import networkx as nx
 from sacred import Ingredient
 
 import pyspike
-import pyspike.temporal
+import occ.vis.occasion_graph
 import occ.vis.network
 from pathlib import Path
 
@@ -29,15 +29,15 @@ def visualise_temporal_graph(places_path: Path, transitions_path: Path, medium_g
     places = pyspike.tidydata.prepend_tidy_frame_with_tstep(places)
     transitions = pyspike.tidydata.prepend_tidy_frame_with_tstep(transitions)
 
-    place_change_events = pyspike.temporal.generate_place_increased_events(places)
-    transition_events = pyspike.temporal.generate_transition_events(transitions)
+    place_change_events = occ.vis.occasion_graph.generate_place_increased_events(places)
+    transition_events = occ.vis.occasion_graph.generate_transition_events(transitions)
 
-    causal_graph = pyspike.temporal.generate_causal_graph(
+    causal_graph = occ.vis.occasion_graph.generate_causal_graph(
         place_change_events, transition_events, time_per_step=tstep)
     print('str(medium_gml_path): ' + str(medium_gml_path))
     medium_graph = nx.read_gml(str(medium_gml_path), destringizer=int)
 
-    fig = pyspike.temporal.generate_causal_graph_figure(causal_graph, medium_graph, run_id=run_id)
+    fig = occ.vis.occasion_graph.generate_causal_graph_figure(causal_graph, medium_graph, run_id=run_id)
     return fig
     # plot_url = py.iplot(fig, filename='causal_graph.html')
     # return plot_url

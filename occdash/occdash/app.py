@@ -14,10 +14,11 @@ from flask_caching import Cache
 
 import occdash
 import pyspike
-import pyspike.temporal
+import occ.vis.occasion_graph
 import occ.vis.analysis
 import occ.vis.network_dash
-from pyspike import tidydata, temporal
+from pyspike import tidydata
+from occ.vis import occasion_graph
 from pyspike.sacred.sacredrun import SacredRun
 
 RUN_180 = SacredRun(Path(occdash.__file__).parent.parent / 'tests' / 'files' / 'run_180')
@@ -265,13 +266,13 @@ def update_occasion_graph_graph(run_id):
     places = pyspike.tidydata.prepend_tidy_frame_with_tstep(places)
     transitions = pyspike.tidydata.prepend_tidy_frame_with_tstep(transitions)
 
-    place_change_events = pyspike.temporal.generate_place_increased_events(places)
-    transition_events = pyspike.temporal.generate_transition_events(transitions)
+    place_change_events = occ.vis.occasion_graph.generate_place_increased_events(places)
+    transition_events = occ.vis.occasion_graph.generate_transition_events(transitions)
 
-    occasion_graph = pyspike.temporal.generate_causal_graph(
+    occasion_graph = occ.vis.occasion_graph.generate_causal_graph(
         place_change_events, transition_events, time_per_step=tstep)
 
-    return pyspike.temporal.generate_causal_graph_figure(
+    return occ.vis.occasion_graph.generate_causal_graph_figure(
             occasion_graph, medium_graph(run_id))
     return causal_graph
 
@@ -336,7 +337,7 @@ def places_df(run_id):
 @cache.memoize()
 def changed_places_df(run_id):
     places = places_df(run_id)
-    place_changes = temporal.filter_place_changed_events(places)
+    place_changes = occasion_graph.filter_place_changed_events(places)
     place_changes.sort_values('tstep')
     return place_changes
     # return place_changes.to_json(orient='split')
