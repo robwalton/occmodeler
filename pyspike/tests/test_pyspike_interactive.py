@@ -8,21 +8,25 @@ from pyspike.sacred import call
 from pyspike.sacred.call import run_experiment
 
 from pyspike.model import UnitModel, u, n1, n2, Unit
-from occ.model import FollowNeighbour as follow1, FollowTwoNeighbours as follow2, External as ext
+from occ.model import follow1, follow2, ext
 
 PATH = Path(__file__)
+
 
 @pytest.fixture
 def a():
     return Unit.place('a', '1`all')
 
+
 @pytest.fixture
 def b():
     return Unit.place('b')
 
+
 @pytest.fixture
 def c():
     return Unit.place('c')
+
 
 @pytest.fixture
 def C():
@@ -50,9 +54,11 @@ def m(a, b, c, C):
     ])
     return m
 
+
 @pytest.fixture
 def medium_graph():
     return nx.Graph([(0, 1), (1, 2), (2, 0), (2, 3)])
+
 
 def test_places(a, b, c, C):
     assert a.to_candl() == '  Unit a = 1`all;'
@@ -60,6 +66,7 @@ def test_places(a, b, c, C):
     assert c.to_candl() == '  Unit c = 0`0;'
     assert C.to_candl() == '  Unit C = 0`0;'
     assert a.name == 'a'
+
 
 
 def test_Call(m, medium_graph):

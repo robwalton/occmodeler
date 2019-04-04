@@ -13,7 +13,8 @@ expand_transition_name = pyspike.model.Transition.expand_name  # TODO: hmm
 import plotly.graph_objs as go
 
 import pyspike
-from pyspike.util import render_name, check_medium_graph
+from pyspike.util import render_name
+from occ.model.network import check_medium_graph
 
 NOAXIS = dict(
     title='',
