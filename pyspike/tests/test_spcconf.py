@@ -1,4 +1,6 @@
 import json
+import os
+import tempfile
 from textwrap import dedent
 from collections import OrderedDict
 
@@ -106,9 +108,8 @@ class TestArgsToOD(object):
 
 IMPORT = OD([('from', 'model/diffusion_2D4.andl')])
 MODEL = OD([('constants', OD(all=OD([('D', 3), ('M', 'D/2')]))), ('places', {'P': '1000`(M,M)'})])
-EXPORT1 = OD(places=[], to='spike/output/places.csv')
-EXPORT2 = OD(places=["Grid2D"], to='spike/output/coloured-places.csv')
-EXPORT3 = OD(transitions=[], to='spike/output/transitions.csv')
+EXPORT1 = OD(places=[], to='output/places.csv')
+EXPORT2 = OD(transitions=[], to='output/transitions.csv')
 INTERVAL = OD(start=0, step=0.1, stop=10)
 SIMULATION = OD([
     ('name', 'Diffusion'),
@@ -117,9 +118,9 @@ SIMULATION = OD([
     ('threads', 0),
     ('interval', INTERVAL),
     ('runs', 100),
-    ('export', [EXPORT1, EXPORT2, EXPORT3])
+    ('export', [EXPORT1, EXPORT2])
 ])
-CONFIGURATION = OD(OD([('model', MODEL),('simulation', SIMULATION)]))
+CONFIGURATION = OD(OD([('model', MODEL), ('simulation', SIMULATION)]))
 INTEGRATION = OD([('import', IMPORT), ('configuration', CONFIGURATION)])
 
 INTEGRATION_SPC = '''\
@@ -147,15 +148,11 @@ configuration: {
         runs: 100
         export: {
             places: []
-            to: "spike/output/places.csv"
-        }
-        export: {
-            places: ["Grid2D"]
-            to: "spike/output/coloured-places.csv"
+            to: "output/places.csv"
         }
         export: {
             transitions: []
-            to: "spike/output/transitions.csv"
+            to: "output/transitions.csv"
         }
     }
 }'''
@@ -205,7 +202,7 @@ class TestODToSpc(object):
 
     def test_to_spc_simulation_with_exports(self):
         simulation = OD([('type', 'stochastic'),
-                         ('export', [EXPORT1, EXPORT2, EXPORT3])])
+                         ('export', [EXPORT1, EXPORT2])])
 
         od = OD(configuration=OD(simulation=simulation))
         assert od_to_spc(od, 1) == dedent('''\
@@ -214,15 +211,11 @@ class TestODToSpc(object):
                 type: stochastic
                 export: {
                     places: []
-                    to: "spike/output/places.csv"
-                }
-                export: {
-                    places: ["Grid2D"]
-                    to: "spike/output/coloured-places.csv"
+                    to: "output/places.csv"
                 }
                 export: {
                     transitions: []
-                    to: "spike/output/transitions.csv"
+                    to: "output/transitions.csv"
                 }
             }
         }''')
@@ -232,6 +225,7 @@ class TestODToSpc(object):
         print(od_to_spc(INTEGRATION, 1))
         print('---')
         assert od_to_spc(INTEGRATION, 1) == INTEGRATION_SPC
+
 
 def test_expand_export_path_list():
     epl = ['o/places.csv', 'o/transitions.csv']
@@ -249,5 +243,19 @@ def test_expand_export_path_list():
         'o/transitions_0001.csv',
         'o/transitions_0002.csv',
     ]
+
+
+def test_create_conf_file():
+    places_path_list, transitions_path_list,  spc_string = pyspike.spcconf.create_conf_file(
+        'empty.candl', MODEL, SIMULATION, 1)
+    assert places_path_list == ['output/places.csv']
+    assert transitions_path_list == ['output/transitions.csv']
+
+
+def test_create_conf_file_with_multiple_runs():
+    places_path_list, transitions_path_list,  spc_string = pyspike.spcconf.create_conf_file(
+        'empty.candl', MODEL, SIMULATION, 2)
+    assert places_path_list == ['output/places.csv', 'output/places_0000.csv', 'output/places_0001.csv']
+    assert transitions_path_list == ['output/transitions.csv', 'output/transitions_0000.csv', 'output/transitions_0001.csv']
 
 

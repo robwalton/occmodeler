@@ -7,44 +7,78 @@ from collections import OrderedDict
 OD = OrderedDict
 
 
-def create_conf_file(model_path, model_args, sim_args, repeat_sim, output_dir):
-    """Create a Spike cnfiguration file (.spc)
+def create_conf_file(model_file_name, model_args, sim_args, repeat_sim):
+    """Create a Spike configuration file (.spc)
 
-    :param model_args:
-    :param repeat_sim:
-    :return:
-    :param output_dir:
-    :param conf_target_path: Path to write conf file
-    :param model_path: Model to import
-    :param sim_args: unordered dict of simulation arguments
-    :repeat_sim: times to repeat simulation
-    :return: list of files which will be written
+    Spike will be run from a working directory containing input and output directories.
+
+    :param model_file_name: name of .candl file in input directory
+    :param model_args: dict of form:
+        {
+            'constants': {
+                'all': {
+                    'D': 3,
+                    'M': 'D/2'
+                }
+            },
+            'places': {
+                'P': '1000`(M,M)'
+            }
+        }
+    :param sim_args: dict of form:
+        {
+            "name": "Diffusion",
+            "type": "stochastic",
+            "solver": "direct",
+            "threads": 0,
+            "interval": {
+                "start": 0,
+                "step": 0.1,
+                "stop": 10
+            },
+            "runs": 100,
+            "export": [
+                {
+                    "places": [],
+                    "to": "output/places.csv"
+                },
+                {
+                    "transitions": [],
+                    "to": "output/transitions.csv"
+                }
+            ]
+        }
+    :param repeat_sim: number of times to run the same simulation. Each run resulting a new file.
+    :return: a list of absolute file paths (as string) which would be written and contents of .spc file to execute with Spike
     """
 
     sim_args = deepcopy(sim_args)
 
-    if not os.path.isfile(model_path):
-        raise Exception("model_path '{}' does not exist.".format(model_path))
-
     # Make simulation output paths absolute
 
     export_list = []
-    export_path_list = []
+    places_path_list = []
+    transitions_path_list = []
     for export_item in sim_args['export']:
         export_item = dict(export_item)
-        expanded_path = os.path.join(output_dir, export_item['to'])
-        export_item['to'] = expanded_path
         export_list.append(export_item)
-        export_path_list.append(expanded_path)
+        if 'places' in export_item:
+            places_path_list.append(export_item['to'])
+        elif 'transitions' in export_item:
+            transitions_path_list.append(export_item['to'])
+        else:
+            raise ValueError(f"neither places nor tranistions key in item: '{export_item}'")
+
     
     sim_args['export'] = export_list
 
-    od = args_to_od(model_path, model_args, sim_args, repeat_sim)
+    od = args_to_od(os.path.join('input', model_file_name), model_args, sim_args, repeat_sim)
     spc_string = od_to_spc(od, repeat_sim)
 
     if repeat_sim > 1:
-        export_path_list = expand_export_path_list(export_path_list, repeat_sim)
-    return export_path_list, spc_string
+        places_path_list = expand_export_path_list(places_path_list, repeat_sim)
+        transitions_path_list = expand_export_path_list(transitions_path_list, repeat_sim)
+    return places_path_list, transitions_path_list,  spc_string
 
 
 def expand_export_path_list(export_path_list, repeat_sim):
