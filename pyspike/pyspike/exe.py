@@ -20,7 +20,7 @@ class SimArgs:
     repeat_sim: int
 
 
-def run_in_dir(candl_str: str, sim_args: SimArgs, spike_run_dir):
+def run_in_dir(candl_str: str, sim_args: SimArgs, spike_run_dir, skip_call=False):
     """Run spike in a given directory returning a manifest dictionary.
 
     Creates:
@@ -32,15 +32,14 @@ def run_in_dir(candl_str: str, sim_args: SimArgs, spike_run_dir):
 
     places_path_list, transitions_path_list, relative_spc_path, candl_path = \
         _prep_for_spike_call(candl_str, sim_args, spike_run_dir)
-
-    call_spike(spike_run_dir, relative_spc_path)
+    if not skip_call:
+        call_spike(spike_run_dir, relative_spc_path)
 
     spike_manifest = {
 
         'input': {
             'candl': candl_path,
             'spc': relative_spc_path
-
         },
         'output': {
             'places': places_path_list,

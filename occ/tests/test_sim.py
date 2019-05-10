@@ -1,16 +1,13 @@
+import json
 import os
-from pathlib import Path
+from io import StringIO
 
 import networkx as nx
+import pandas as pd
 import pytest
 
-from pyspike.sacred import call
-from pyspike.sacred.call import run_experiment
-
-from pyspike.model import UnitModel, u, n1, n2, Unit
-from occ.model import follow1, follow2, ext
-
-PATH = Path(__file__)
+from occ.model import Unit, UnitModel, ext, u
+from occ.sim import SimArgs, SystemModel, run_in_dir, run_in_tmp, run_in_next_dir, archive_to_next_dir, _IncrementalDir
 
 
 @pytest.fixture
@@ -24,56 +21,200 @@ def b():
 
 
 @pytest.fixture
-def c():
-    return Unit.place('c')
-
-
-@pytest.fixture
-def C():
-    return Unit.place('C')
-
-
-@pytest.fixture
-def m(a, b, c, C):
+def m(a, b):
     m = UnitModel(
-        name='last_registered_two_neighbours_required',
+        name='external_transition',
         colors=[Unit],
-        variables=[u, n1, n2],
-        places=[a, b, c, C]
+        variables=[u],
+        places=[a, b]
     )
-
     m.add_transitions_from([
-        follow1(a, b),
-        follow2(b, c),
-        follow2(b, C),
-        follow2(c, C),
-        follow2(C, c),
-        ext(a, b, 1, [0, 15]),
-        ext(b, C, 2, [15, 16]),
-        ext(b, c, 2, [0, 29]),
+        ext(a, b, 0.5, [0]),  # transition node 0 at .5 s
     ])
     return m
 
 
 @pytest.fixture
 def medium_graph():
-    return nx.Graph([(0, 1), (1, 2), (2, 0), (2, 3)])
+    return nx.Graph([(0, 1), (1, 2)])
 
 
-def test_places(a, b, c, C):
-    assert a.to_candl() == '  Unit a = 1`all;'
-    assert b.to_candl() == '  Unit b = 0`0;'
-    assert c.to_candl() == '  Unit c = 0`0;'
-    assert C.to_candl() == '  Unit C = 0`0;'
-    assert a.name == 'a'
+@pytest.fixture
+def sim_args():
+    return SimArgs(start=0, stop=1, step=.1, runs=1, repeat_sim=1)
 
 
+@pytest.fixture
+def model(m, medium_graph):
+    return SystemModel(m, medium_graph, 'two graph', None)
 
-def test_Call(m, medium_graph):
-    call.run_experiment(m, medium_graph, graph_name='four graph', calling_file=PATH, file_storage_observer=False)
-    # manual check only
+
+@pytest.fixture
+def incremental_dir(tmp_path):
+    return _IncrementalDir(tmp_path)
 
 
-def test_Call_with_multiple_repeats(m, medium_graph):
-    call.run_experiment(m, medium_graph, graph_name='four graph', repeat_sim=3, calling_file=PATH, file_storage_observer=False)
-    # manual check only
+def test_run_in_dir(model, sim_args, tmp_path):
+    d = run_in_dir(model, sim_args, tmp_path)
+    print(d)
+
+    # Check manifest dict
+    assert d['system_model'] is None  # Placeholder
+    assert d['sim_args'] == {'repeat_sim': 1, 'runs': 1, 'start': 0, 'step': 0.1, 'stop': 1}
+    assert d['spike']['input']['spc'] == 'input/conf.spc'
+    assert d['spike']['input']['candl'] == 'input/system_model.candl'
+    assert d['spike']['output'] == {
+        'places': ['output/places.csv'],
+        'transitions': ['output/transitions.csv']
+    }
+
+    # check manifest json
+    with open(os.path.join(tmp_path, 'manifest.json'), "r") as read_file:
+        manifest_dict = json.load(read_file)
+    assert manifest_dict == d
+
+    # check Spike's output
+    with open(os.path.join(tmp_path, 'spike', 'output', 'places.csv'), 'r') as f:
+        places_str = f.read()
+    assert places_str == SIMPLE_CANDLE_PLACES_STR
+
+
+def test_run_in_tmp_dir(model, sim_args):
+    sr = run_in_tmp(model, sim_args)
+    assert sr.sim_args == sim_args
+    assert sr.model == model
+    desired_places = pd.read_csv(StringIO(SIMPLE_CANDLE_PLACES_STR), sep=";")
+    pd.testing.assert_frame_equal(sr.places, desired_places)
+    assert sr.places is not None  # lazy!
+
+
+def test_run_in_next_dir(model, sim_args, tmp_path):
+    base_dir = tmp_path
+    run_dir, manifest = run_in_next_dir(model, sim_args, base_dir)
+    assert run_dir == os.path.join(tmp_path, str(0))
+
+
+def test_archive_in_next_dir(model, sim_args, tmp_path):
+    basedir = tmp_path
+    sr = run_in_tmp(model, sim_args)
+
+    run_dir, manifest_dict = archive_to_next_dir(sr, basedir)
+
+    assert run_dir == os.path.join(tmp_path, str(0))
+
+    # Check manifest dict
+    d = manifest_dict
+    assert d['system_model'] is None  # Placeholder
+    assert d['sim_args'] == {'repeat_sim': 1, 'runs': 1, 'start': 0, 'step': 0.1, 'stop': 1}
+    assert d['spike']['input']['spc'] == 'input/conf.spc'
+    assert d['spike']['input']['candl'] == 'input/system_model.candl'
+    assert d['spike']['output'] == {
+        'places': ['output/places.csv'],
+        'transitions': ['output/transitions.csv']
+    }
+
+    # check manifest json
+    with open(os.path.join(tmp_path, str(0), 'manifest.json'), "r") as read_file:
+        manifest_dict = json.load(read_file)
+    assert manifest_dict == d
+
+    # check Spike's output
+    with open(os.path.join(tmp_path, str(0), 'spike', 'output', 'places.csv'), 'r') as f:
+        places_str = f.read()
+    assert places_str == SIMPLE_CANDLE_PLACES_STR_WITH_TSTEP_0_INCLUDING_DECIMAL
+
+
+class TestIncrementalDir:
+
+    def test_incremental_dir_when_empty(self, incremental_dir):
+        id_ = incremental_dir
+        assert id_.last_number() is None
+        assert id_.next_number() == 0
+
+    def test_incremental_dir_first_next_dir(self, incremental_dir):
+        id_ = incremental_dir
+
+        d = id_.create_next_dir()
+        assert d == os.path.join(id_.basedir, str(0))
+        assert os.path.exists(d)
+        assert id_.last_number() == 0
+        assert id_.next_number() == 1
+
+        d = id_.create_next_dir()
+        assert d == os.path.join(id_.basedir, str(1))
+        assert os.path.exists(d)
+        assert id_.last_number() == 1
+        assert id_.next_number() == 2
+
+    def test_incremental_dir_second_next_dir(self, incremental_dir):
+        id_ = incremental_dir
+
+        id_.create_next_dir()
+        d = id_.create_next_dir()
+        assert d == os.path.join(id_.basedir, str(1))
+        assert os.path.exists(d)
+        assert id_.last_number() == 1
+        assert id_.next_number() == 2
+
+
+def test_dataframe_to_csv():
+    # Just experimenting
+    places = pd.read_csv(StringIO(SIMPLE_CANDLE_PLACES_STR), sep=";")
+    places_csv_str = places.to_csv(sep=';', index=False)  # <===
+    print(places_csv_str)
+    assert places_csv_str == SIMPLE_CANDLE_PLACES_STR_WITH_TSTEP_0_INCLUDING_DECIMAL
+
+
+SIMPLE_CANDLE_PLACES_STR = """Time;b;a;b_0;a_0
+0;0;1;0;1
+0.1;0;1;0;1
+0.2;0;1;0;1
+0.3;0;1;0;1
+0.4;0;1;0;1
+0.5;0;1;0;1
+0.6;1;0;1;0
+0.7;1;0;1;0
+0.8;1;0;1;0
+0.9;1;0;1;0
+"""
+
+SIMPLE_CANDLE_PLACES_STR_WITH_TSTEP_0_INCLUDING_DECIMAL = """Time;b;a;b_0;a_0
+0.0;0;1;0;1
+0.1;0;1;0;1
+0.2;0;1;0;1
+0.3;0;1;0;1
+0.4;0;1;0;1
+0.5;0;1;0;1
+0.6;1;0;1;0
+0.7;1;0;1;0
+0.8;1;0;1;0
+0.9;1;0;1;0
+"""
+
+SIMPLE_CANDL_STR = \
+"""colspn  [external_transition on two graph]
+{
+colorsets:
+  Unit = {0..2};
+
+variables:
+  Unit : u;
+
+colorfunctions:
+
+places:
+discrete:
+  Unit a = 1`all;
+  Unit b = 0`0;
+
+transitions:
+deterministic:
+  extab
+    :
+    : [b + {0}] & [a - {0}]
+    : 0.5
+    ;
+
+}
+"""
+
