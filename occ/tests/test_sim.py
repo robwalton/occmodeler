@@ -6,8 +6,8 @@ import networkx as nx
 import pandas as pd
 import pytest
 
-from occ.model import Unit, UnitModel, ext, u
-from occ.sim import SimArgs, SystemModel, run_in_dir, run_in_tmp, run_in_next_dir, archive_to_next_dir, _IncrementalDir
+from occ.model import Unit, UnitModel, ext, u, SystemModel
+from occ.sim import SimArgs, run_in_dir, run_in_tmp, run_in_next_dir, archive_to_next_dir, _IncrementalDir
 
 
 @pytest.fixture
