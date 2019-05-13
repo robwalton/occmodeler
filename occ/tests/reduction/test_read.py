@@ -2,12 +2,13 @@ import pandas as pd
 import pytest
 import re
 
+import occ.reduction.read2
 import occ_test_files
-from pyspike import tidydata
+from occ.reduction import read
 
 from pandas.util.testing import assert_frame_equal
 
-from pyspike.tidydata import TRANSITION_COL_RE
+from occ.reduction.read import TRANSITION_COL_RE
 
 
 def log(*thing_list):
@@ -48,7 +49,7 @@ def tidy_frame():
 
 
 def test_tidy_places(raw_frame, tidy_frame):
-    frame = tidydata.tidy_frame(raw_frame, 'place')
+    frame = read.tidy_frame(raw_frame, 'place')
     log('result', frame)
     log('desired', tidy_frame)
     assert_frame_equal(frame, tidy_frame)
@@ -60,7 +61,7 @@ def test_prepend_tidy_frame_with_tstep():
     f_in['x'] = pd.Series([1, 2, 3, 4, 5, 6])
     desired = f_in.copy()
     desired.insert(0, 'tstep', pd.Series([0, 0, 1, 1, 2, 2]))
-    actual = tidydata.prepend_tidy_frame_with_tstep(f_in)
+    actual = occ.reduction.read2.prepend_tidy_frame_with_tstep(f_in)
     log('desired:', desired)
     assert_frame_equal(actual, desired)
 
@@ -71,7 +72,7 @@ def test_tidy_with_underscore_name():
         data={'Time': [0], 'a_bc_3': [1]},
         columns=['Time', 'a_bc_3'],
     )
-    tidy_frame = tidydata.tidy_frame(input_frame, 'place')
+    tidy_frame = read.tidy_frame(input_frame, 'place')
 
     desired_frame = pd.DataFrame(
         data={'time': [0], 'type': ['place'], 'name': ['a_bc'], 'num': ['3'], 'count': [1]},
@@ -82,7 +83,7 @@ def test_tidy_with_underscore_name():
 
 
 def test_filter_by_name_with_all_names(tidy_frame):
-    frame = tidydata.filter_by_name(tidy_frame, ['a', 'b'])
+    frame = read.filter_by_name(tidy_frame, ['a', 'b'])
     assert_frame_equal(frame, tidy_frame)
 
 
@@ -119,12 +120,12 @@ class TestLoadTransitions:
             data={raw_columns[i]: [i] for i in range(len(raw_columns))},
             columns=raw_columns,
         )
-        frame = tidydata.tidy_frame(raw_frame, 'transition')
+        frame = read.tidy_frame(raw_frame, 'transition')
         log(frame)
         assert list(frame.columns) == ['time', 'type', 'name', 'unit', 'neighbour', 'neighbour2', 'count']
 
     def test_with_are_both_neighbours__func_used(self):
-        transitions = tidydata.read_csv(occ_test_files.files.RUN_90_TRANSITIONS, 'transition')
+        transitions = read.read_csv(occ_test_files.files.RUN_90_TRANSITIONS, 'transition')
         log([transitions])
 
 

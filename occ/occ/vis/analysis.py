@@ -1,11 +1,9 @@
 from pathlib import Path
 
-
-import plotly.offline as py
 import plotly.graph_objs as go
 
 import pyspike
-from pyspike import tidydata
+from occ.reduction import read
 import pyspike.util
 
 from pyspike.util import render_name
@@ -15,7 +13,7 @@ def generate_sums_by_state_figure(places_path: Path = None, places=None, run_id=
     if places_path:
         assert not places
         assert places_path.exists()
-        places = tidydata.read_csv(str(places_path), 'place', drop_non_coloured_sums=False)
+        places = read.read_csv(str(places_path), 'place', drop_non_coloured_sums=False)
     elif places is not None:
         assert not places_path
     else:

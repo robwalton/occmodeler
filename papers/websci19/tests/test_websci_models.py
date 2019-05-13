@@ -1,20 +1,8 @@
-import os
 from pathlib import Path
 
-import pyspike
-from pyspike import tidydata
 from occ.model import FollowNeighbour as follow1, FollowTwoNeighbours as follow2, ModulatedInternal as modulated_internal
 from pyspike.model import UnitModel, u, n1, n2, Unit
 from pyspike.model import marking
-import plotly.offline as py
-import plotly.graph_objs as go
-
-import pyspike
-from pyspike import tidydata
-import pyspike.util
-
-from pyspike.util import render_name
-
 
 import websci19
 import websci19.models

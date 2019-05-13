@@ -11,12 +11,13 @@ expand_transition_name = pyspike.model.Transition.expand_name  # TODO: hmm
 from pandas import DataFrame
 
 
-def generate_place_increased_events(df):
+def generate_place_increased_events(places_data_frame):
     '''
 
     :param df:
     :return:
     '''
+    df = places_data_frame
     df.sort_values(by=['time'])
     change_frame_list = []
 
@@ -34,6 +35,9 @@ def generate_place_increased_events(df):
 
     return df_out.sort_values(by=['time', 'name', 'num'])
 
+
+
+# TODO: remove this forked version of generate_place_increased_events()
 
 def filter_place_changed_events(df):
     '''

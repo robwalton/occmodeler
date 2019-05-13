@@ -3,13 +3,11 @@ import pandas as pd
 import pytest
 from pandas.util.testing import assert_frame_equal
 import matplotlib.pyplot as plt
-import plotly.offline as py
 
 import occ.reduction.occasion_graph
-from pyspike import tidydata
-from occ.vis import occasion_graph
+import occ.reduction.read2
+from occ.reduction import read
 
-from occ.vis.occasion_graph import Style
 from occ.reduction.occasion_graph import generate_place_increased_events, generate_transition_events, \
     generate_causal_graph, Occasion
 
@@ -125,32 +123,32 @@ def test_generate_causal_graph_with__are_both_neighbours__run_90_():
 
 def _load_run_90():
     graph_medium = nx.read_gml(occ_test_files.files.RUN_90_GML, destringizer=int)
-    places = tidydata.read_csv(occ_test_files.files.RUN_90_PLACES, 'place', drop_non_coloured_sums=True)
-    places = tidydata.prepend_tidy_frame_with_tstep(places)
+    places = read.read_csv(occ_test_files.files.RUN_90_PLACES, 'place', drop_non_coloured_sums=True)
+    places = occ.reduction.read2.prepend_tidy_frame_with_tstep(places)
     place_change_events = generate_place_increased_events(places)
-    transitions = tidydata.read_csv(occ_test_files.files.RUN_90_TRANSITIONS, 'transition', drop_non_coloured_sums=True)
-    transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
+    transitions = read.read_csv(occ_test_files.files.RUN_90_TRANSITIONS, 'transition', drop_non_coloured_sums=True)
+    transitions = occ.reduction.read2.prepend_tidy_frame_with_tstep(transitions)
     transition_events = generate_transition_events(transitions)
     return graph_medium, place_change_events, transition_events
 
 def _load_run_100():
     graph_medium = nx.read_gml(occ_test_files.files.RUN_100_GML, destringizer=int)
-    places = tidydata.read_csv(occ_test_files.files.RUN_100_PLACES, 'place', drop_non_coloured_sums=True)
-    places = tidydata.prepend_tidy_frame_with_tstep(places)
+    places = read.read_csv(occ_test_files.files.RUN_100_PLACES, 'place', drop_non_coloured_sums=True)
+    places = occ.reduction.read2.prepend_tidy_frame_with_tstep(places)
     place_change_events = generate_place_increased_events(places)
-    transitions = tidydata.read_csv(occ_test_files.files.RUN_100_TRANSITIONS, 'transition', drop_non_coloured_sums=True)
-    transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
+    transitions = read.read_csv(occ_test_files.files.RUN_100_TRANSITIONS, 'transition', drop_non_coloured_sums=True)
+    transitions = occ.reduction.read2.prepend_tidy_frame_with_tstep(transitions)
     transition_events = generate_transition_events(transitions)
     return graph_medium, place_change_events, transition_events
 
 
 def _load_run_77():
     graph_medium = _gen_loop_graph(6)
-    places = tidydata.read_csv(PLACES, 'place', drop_non_coloured_sums=True)
-    places = tidydata.prepend_tidy_frame_with_tstep(places)
+    places = read.read_csv(PLACES, 'place', drop_non_coloured_sums=True)
+    places = occ.reduction.read2.prepend_tidy_frame_with_tstep(places)
     place_change_events = generate_place_increased_events(places)
-    transitions = tidydata.read_csv(TRANSITIONS, 'transition', drop_non_coloured_sums=True)
-    transitions = tidydata.prepend_tidy_frame_with_tstep(transitions)
+    transitions = read.read_csv(TRANSITIONS, 'transition', drop_non_coloured_sums=True)
+    transitions = occ.reduction.read2.prepend_tidy_frame_with_tstep(transitions)
     transition_events = generate_transition_events(transitions)
     return graph_medium, place_change_events, transition_events
 

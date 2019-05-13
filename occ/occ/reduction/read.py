@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 #%% Read and filter data
 
@@ -87,13 +86,6 @@ def filter_by_name(frame, name_list):
     frame = frame.loc[frame['name'].isin(name_list)]
     frame.index = pd.Index(range(len(frame)))
     return frame
-
-
-def prepend_tidy_frame_with_tstep(places):
-    # TODO: probably very slow!
-    z = {v: i for i, v in enumerate(places['time'].unique())}
-    places.insert(0, 'tstep', places['time'].map(z))
-    return places
 
 
 def determine_time_range_of_data_frame(df):

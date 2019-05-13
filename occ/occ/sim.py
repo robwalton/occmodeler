@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+import occ.reduction
 import pyspike.exe
 from occ.model import SystemModel
 from pyspike.exe import SimArgs
@@ -58,8 +59,8 @@ def run_in_tmp(model: SystemModel, sim_args: SimArgs) -> SimulationResult:
         places_path = os.path.join(tmp_dir, 'spike', output_dict['places'][0])
         transitions_path = os.path.join(tmp_dir, 'spike', output_dict['transitions'][0])
 
-        transitions_frame = pd.read_csv(transitions_path, delimiter=';')
-        places_frame = pd.read_csv(places_path, delimiter=';')
+        transitions_frame = occ.reduction.load_transitions(transitions_path)
+        places_frame = occ.reduction.load_places(places_path)
 
     return SimulationResult(
         model=model, sim_args=sim_args, places=places_frame, transitions=transitions_frame)

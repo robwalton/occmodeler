@@ -12,13 +12,12 @@ import json
 from flask_caching import Cache
 
 import occ.reduction.occasion_graph
+import occ.reduction.read2
 import occdash
-import pyspike
 import occ.vis.occasion_graph
 import occ.vis.analysis
 import occ.vis.network_dash
-from pyspike import tidydata
-from occ.vis import occasion_graph
+from occ.reduction import read
 from pyspike.sacred.sacredrun import SacredRun
 
 RUN_180 = SacredRun(Path(occdash.__file__).parent.parent / 'tests' / 'files' / 'run_180')
@@ -260,11 +259,11 @@ def update_occasion_graph_graph(run_id):
     run = sacred_run(run_id)
     tstep = run.config['spike']['sim_args']['interval']['step']
 
-    places = tidydata.read_csv(filename=str(run.places_path), node_type="place", drop_non_coloured_sums=True)
-    transitions = tidydata.read_csv(filename=str(run.transitions_path), node_type="transition", drop_non_coloured_sums=True)
-    _, _, tstep = tidydata.determine_time_range_of_data_frame(places)
-    places = pyspike.tidydata.prepend_tidy_frame_with_tstep(places)
-    transitions = pyspike.tidydata.prepend_tidy_frame_with_tstep(transitions)
+    places = read.read_csv(filename=str(run.places_path), node_type="place", drop_non_coloured_sums=True)
+    transitions = read.read_csv(filename=str(run.transitions_path), node_type="transition", drop_non_coloured_sums=True)
+    _, _, tstep = read.determine_time_range_of_data_frame(places)
+    places = occ.reduction.read2.prepend_tidy_frame_with_tstep(places)
+    transitions = occ.reduction.read2.prepend_tidy_frame_with_tstep(transitions)
 
     place_change_events = occ.reduction.occasion_graph.generate_place_increased_events(places)
     transition_events = occ.reduction.occasion_graph.generate_transition_events(transitions)
@@ -328,8 +327,8 @@ def json_to_graph(s: str):
 @cache.memoize()
 def places_df(run_id):
     run = sacred_run(run_id)
-    places = tidydata.read_csv(filename=str(run.places_path), node_type="place", drop_non_coloured_sums=False)
-    places = pyspike.tidydata.prepend_tidy_frame_with_tstep(places)
+    places = read.read_csv(filename=str(run.places_path), node_type="place", drop_non_coloured_sums=False)
+    places = occ.reduction.read2.prepend_tidy_frame_with_tstep(places)
     return places
     # return places.to_json(orient='split')
 

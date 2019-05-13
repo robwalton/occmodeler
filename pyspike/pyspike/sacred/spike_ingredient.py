@@ -12,14 +12,7 @@ from pyspike.sacred import TMP_SPIKE_CONF_PATH, TMP_SPIKE_OUTPUT_DIR
 spike_ingredient = Ingredient('spike')
 
 
-@spike_ingredient.config
-def spike_config():
-
-    model_path = ''
-
-    model_args = {}
-
-    sim_args = {
+BASE_SIM_ARGS = {
         "name": "blank",
         "type": "stochastic",
         "solver": "direct",
@@ -41,6 +34,15 @@ def spike_config():
             },
         ]
     }
+
+@spike_ingredient.config
+def spike_config():
+
+    model_path = ''
+
+    model_args = {}
+
+    sim_args = BASE_SIM_ARGS
 
     repeat_sim = 1
 

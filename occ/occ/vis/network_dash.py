@@ -5,7 +5,6 @@ import numpy as np
 import plotly.graph_objs as go
 
 import pyspike
-from pyspike import tidydata
 from pyspike.util import render_name
 
 
