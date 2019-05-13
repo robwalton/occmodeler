@@ -10,7 +10,6 @@ def test_run_in_dir_without_separate_marking():  # m, medium_graph):
 
     d = pyspike.exe.run_in_dir(SIMPLE_CANDL_STR, sim_args, tmp_dir)
 
-    assert d['sim_args'] == {'repeat_sim': 1, 'runs': 1, 'start': 0, 'step': 0.1, 'stop': 1}
     assert d['input']['spc'] == 'input/conf.spc'
     assert d['input']['candl'] == 'input/system_model.candl'
     assert d['output'] == {
