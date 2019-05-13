@@ -219,6 +219,7 @@ class UnitModel:
 
     def _title_chunk(self, graph_name=None):
         name = self._full_name(graph_name) if graph_name else self.name
+        name = name.replace(' ', '_')
         return f'colspn  [{name}]'
 
     def _colorsets_chunk(self, graph_medium: nx.Graph):
