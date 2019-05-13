@@ -31,9 +31,15 @@ For now, see the development section below for clues to installation. More to fo
 ## Restructure
 
 The code is currently being restructured to
-* abstract Spike out,
+* abstract Spike out, current Spike code is specific to crafting .andl files from a repeated unit which is overly limiting however.
 * remove the dependency on Sacred for running experiments,
 * create a clean API for interactive use.
+
+Following this the code will be refactored as required to add functionality, but expecially fragile bits include:
+
+* creating `.andl` files
+* creating `.spc` files
+* starting spike for each run adds overhead
 
 ## Code structure
 
