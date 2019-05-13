@@ -5,22 +5,13 @@ import os
 import tempfile
 from dataclasses import dataclass
 
-import networkx as nx
 import pandas as pd
 
 import pyspike.exe
-from occ.model import UnitModel
+from occ.model import SystemModel
 from pyspike.exe import SimArgs
 
 logging.basicConfig(level=logging.INFO)
-
-
-@dataclass
-class SystemModel:
-    unit: UnitModel
-    network: nx.Graph  # multiple later. depends on unit
-    network_name: str
-    marking: dict
 
 
 @dataclass
@@ -47,7 +38,7 @@ def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir):
     }
 
     with open(os.path.join(run_dir, 'manifest.json'), 'w') as f:
-        json.dump(manifest, f)
+        json.dump(manifest, f, indent=2)
 
     return manifest
 
