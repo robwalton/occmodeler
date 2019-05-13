@@ -34,6 +34,10 @@ def run_in_dir(candl_str: str, sim_args: SimArgs, spike_run_dir, skip_call=False
         _prep_for_spike_call(candl_str, sim_args, spike_run_dir)
     if not skip_call:
         call_spike(spike_run_dir, relative_spc_path)
+        # Spike 1.0.1 always returns an error code. Check it worked:
+        if not os.path.exists(os.path.join(spike_run_dir, transitions_path_list[0])):
+            raise AssertionError(
+                f"Check Jupyter server log for Spike output.\nSpike failed to produce a transitions.csv file in the tmpdir '{transitions_path_list[0]}'")
 
     spike_manifest = {
 
@@ -113,6 +117,7 @@ def call_spike(working_dir, spc_path):
     args = ["~/bin/spike exe -f {}".format(spc_path)]
     logging.info(f"Calling: '{str(args)}' from cwd: {working_dir}")
     subprocess.run(args, cwd=working_dir, shell=True)  # check=True)
+    logging.info(f"Call to Spike complete")
 
     # spike 1.0.1 always returns error code 1. Reported on 2018/11/2.
     # try:
