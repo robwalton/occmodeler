@@ -33,6 +33,8 @@ class SimulationResult:
     raw_places: pd.DataFrame
     raw_transitions: pd.DataFrame
 
+    
+
 
 def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir) -> SimulationResult:
 
@@ -52,7 +54,7 @@ def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir) -> SimulationResu
     with open(os.path.join(run_dir, 'manifest.json'), 'w') as f:
         json.dump(manifest, f, indent=2)
 
-    return create_simulation_result(model, sim_args, run_dir)
+    return create_simulation_result(model, run_dir)
 
 
 def run_in_tmp(model: SystemModel, sim_args: SimArgs) -> SimulationResult:
@@ -69,12 +71,13 @@ def run_in_tmp(model: SystemModel, sim_args: SimArgs) -> SimulationResult:
         with open(os.path.join(tmp_dir, 'manifest.json'), "r") as read_file:
             manifest = json.load(read_file)
         spike_output_dict = manifest['spike']['output']
-        sim_res = create_simulation_result(model, sim_args, run_dir=tmp_dir)
+        sim_res = create_simulation_result(model, run_dir=tmp_dir)
         sim_res.run = {}  # Clear as tmp_dir will be gone outside this scope!
+        assert sim_res.sim_args == sim_args
         return sim_res
 
 
-def create_simulation_result(model, sim_args, run_dir=None, run_num=None):
+def create_simulation_result(model, run_dir=None, run_num=None):
 
     run_dict = {'dir': run_dir, 'num': run_num}
     with open(os.path.join(run_dir, 'manifest.json'), "r") as read_file:
@@ -88,7 +91,8 @@ def create_simulation_result(model, sim_args, run_dir=None, run_num=None):
     raw_transitions_frame = occ.reduction.read_raw_csv(transitions_path)
     transitions_frame = occ.reduction.tidy_transitions(raw_transitions_frame)
 
-
+    sim_arg_dict = manifest['sim_args']
+    sim_args = SimArgs(**sim_arg_dict)
     return SimulationResult(
         run=run_dict, model=model, sim_args=sim_args, places=places_frame, transitions=transitions_frame,
         raw_places=raw_places_frame, raw_transitions=raw_transitions_frame)
@@ -109,7 +113,7 @@ def run(model: SystemModel, sim_args: SimArgs, basedir=None):
 
 
 def save(simulation_result: SimulationResult, basedir=None):
-    """Archive a SimulationResult as if it were created with run_in_next_dir.
+    """Archive a SimulationResult as if it were created with run.
 
     Note, that as the SimulationResult does not include the spike/input files
     these must be regenerated.
@@ -144,6 +148,21 @@ def save(simulation_result: SimulationResult, basedir=None):
     sr.raw_transitions.to_csv(os.path.join(spike_run_dir, 'output', 'transitions.csv'), sep=';', index=False)
     sr.run = {'dir': archive_dir, 'num': run_number}
     return sr
+
+
+def load(run_num, basedir=None):
+    if not basedir:
+        basedir = BASEDIR
+    run_dir = os.path.join(basedir, str(run_num))
+    if not os.path.exists(run_dir):
+        raise ValueError(f"'{run_dir}' does not exist")
+    if not os.path.isdir(run_dir):
+        raise ValueError(f"'{run_dir}' is not a dir")
+
+    model = None  # Not currently stored
+    sr = create_simulation_result(model, run_dir, run_num)
+    return sr
+
 
 class _IncrementalDir(object):
     """Runs the integer number of the next incrementally number dir in basedir.

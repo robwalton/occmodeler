@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from occ.model import Unit, UnitModel, ext, u, SystemModel
-from occ.sim import SimArgs, run_in_dir, run_in_tmp, run, save, _IncrementalDir
+from occ.sim import SimArgs, run_in_dir, run_in_tmp, run, save, load, _IncrementalDir
 import occ.sim
 
 @pytest.fixture
@@ -112,6 +112,18 @@ def test_run_in_next_dir(model, sim_args, tmp_path):
 
 def test_get_default_basedir():
     print(occ.sim.BASEDIR)
+
+
+def test_load(model, sim_args, tmp_path):
+    expected = run(model, sim_args, tmp_path)
+    actual = load(0, tmp_path)
+    assert expected.run == actual.run
+    # assert expected.model == actual.model  # model not currently stored!
+    assert expected.sim_args == actual.sim_args
+    pd.testing.assert_frame_equal(expected.places, actual.places)
+    pd.testing.assert_frame_equal(expected.transitions, actual.transitions)
+    pd.testing.assert_frame_equal(expected.raw_places, actual.raw_places)
+    pd.testing.assert_frame_equal(expected.raw_transitions, actual.raw_transitions)
 
 
 class TestArchiveInNextDir:
