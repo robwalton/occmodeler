@@ -2,6 +2,7 @@ import dataclasses
 import json
 import logging
 import os
+import pathlib
 import tempfile
 from dataclasses import dataclass
 
@@ -15,12 +16,18 @@ from pyspike.exe import SimArgs
 logging.basicConfig(level=logging.INFO)
 
 
+# Set default scan location to 'runs' folder in top level of occmodeler dir
+BASEDIR = str(pathlib.Path(os.path.abspath(__file__)).parents[2] / 'runs')
+
+
 @dataclass
 class SimulationResult:
     model: SystemModel
     sim_args: SimArgs
     places: pd.DataFrame
     transitions: pd.DataFrame
+    raw_places: pd.DataFrame
+    raw_transitions: pd.DataFrame
 
 
 def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir):
@@ -56,36 +63,44 @@ def run_in_tmp(model: SystemModel, sim_args: SimArgs) -> SimulationResult:
         logging.info('Using temporary directory:' + tmp_dir)
         manifest = run_in_dir(model, sim_args, tmp_dir)
         output_dict = manifest['spike']['output']
-        places_path = os.path.join(tmp_dir, 'spike', output_dict['places'][0])
-        transitions_path = os.path.join(tmp_dir, 'spike', output_dict['transitions'][0])
 
-        transitions_frame = occ.reduction.load_transitions(transitions_path)
-        places_frame = occ.reduction.load_places(places_path)
+        places_path = os.path.join(tmp_dir, 'spike', output_dict['places'][0])
+        raw_places_frame = occ.read_raw_csv(places_path)
+        places_frame = occ.tidy_places(raw_places_frame)
+
+        transitions_path = os.path.join(tmp_dir, 'spike', output_dict['transitions'][0])
+        raw_transitions_frame = occ.read_raw_csv(transitions_path)
+        transitions_frame = occ.tidy_transitions(raw_transitions_frame)
 
     return SimulationResult(
-        model=model, sim_args=sim_args, places=places_frame, transitions=transitions_frame)
+        model=model, sim_args=sim_args, places=places_frame, transitions=transitions_frame,
+        raw_places=raw_places_frame, raw_transitions=raw_transitions_frame)
 
 
-def run_in_next_dir(model: SystemModel, sim_args: SimArgs, basedir):
+def run_in_next_dir(model: SystemModel, sim_args: SimArgs, basedir=None):
     """Create a new run directory in basedir and call run_in_dir.
     Returning (run_dir, manifest).
     """
+    if not basedir:
+        basedir = BASEDIR
     id_ = _IncrementalDir(basedir)
-    run_dir = id_.create_next_dir()
+    run_num, run_dir = id_.create_next_dir()
     manifest = run_in_dir(model, sim_args, run_dir)
-    return run_dir, manifest
+    return run_num, manifest
 
 
-def archive_to_next_dir(simulation_result: SimulationResult, basedir):
+def archive_to_next_dir(simulation_result: SimulationResult, basedir=None):
     """Archive a SimulationResult as if it were created with run_in_next_dir.
 
     Note, that as the SimulationResult does not include the spike/input files
     these must be regenerated.
     """
 
+    if not basedir:
+        basedir = BASEDIR
     sr = simulation_result
     id_ = _IncrementalDir(basedir)
-    archive_dir = id_.create_next_dir()
+    run_number, archive_dir = id_.create_next_dir()
 
     assert not os.listdir(archive_dir), f"'{archive_dir} is not empty'"
     spike_run_dir = os.path.join(archive_dir, 'spike')
@@ -106,10 +121,10 @@ def archive_to_next_dir(simulation_result: SimulationResult, basedir):
         json.dump(manifest, f)
 
     # Write places.csv and transitions.csv
-    sr.places.to_csv(os.path.join(spike_run_dir, 'output', 'places.csv'), sep=';', index=False)
-    sr.transitions.to_csv(os.path.join(spike_run_dir, 'output', 'transitions.csv'), sep=';', index=False)
+    sr.raw_places.to_csv(os.path.join(spike_run_dir, 'output', 'places.csv'), sep=';', index=False)
+    sr.raw_transitions.to_csv(os.path.join(spike_run_dir, 'output', 'transitions.csv'), sep=';', index=False)
 
-    return archive_dir, manifest
+    return run_number, manifest
 
 
 class _IncrementalDir(object):
@@ -146,10 +161,13 @@ class _IncrementalDir(object):
         return i
 
     def create_next_dir(self):
-        directory = os.path.join(self.basedir, str(self.next_number()))
+        run_number = self.next_number()
+        directory = os.path.join(self.basedir, str(run_number))
         assert not os.path.exists(directory)
         os.makedirs(directory)
-        return directory
+        return run_number, directory
+
+
 
 
 # # # Add state offsets to graph and persist with the gml

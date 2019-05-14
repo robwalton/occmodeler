@@ -5,6 +5,9 @@ import pandas as pd
 
 NODE_TYPES = ('place', 'transition')
 
+def read_raw_csv(filename):
+    return pd.read_csv(filename, delimiter=';')
+
 
 def read_tidy_csv(filename, node_type, filter_name_list=None, drop_non_coloured_sums=False):
     """
@@ -14,28 +17,30 @@ def read_tidy_csv(filename, node_type, filter_name_list=None, drop_non_coloured_
     - a_dot --> a dot
     - a --> a NaN
     """
-
-    raw_frame = pd.read_csv(filename, delimiter=';')
-
     if node_type == 'place':
-        frame = tidy_places(raw_frame, drop_non_coloured_sums)
+        return read_tidy_places(filename, filter_name_list, drop_non_coloured_sums)
     elif node_type == 'transition':
-        frame = tidy_transitions(raw_frame, drop_non_coloured_sums)
+        return read_tidy_transitions(filename, filter_name_list, drop_non_coloured_sums)
     else:
         raise TypeError(f"Unexpected type '{node_type}'")
 
 
-    # Filer by name if provided
+def read_tidy_places(filename, filter_name_list=None, drop_non_coloured_sums=False):
+
+    raw_frame = read_raw_csv(filename)
+    frame = tidy_places(raw_frame, drop_non_coloured_sums)
     if filter_name_list:
         frame = filter_by_name(frame, list(filter_name_list))
 
     return frame
 
 
-def tidy_frame(raw_frame, node_type, drop_non_coloured_sums=False):
-    assert node_type in NODE_TYPES
-
-
+def read_tidy_transitions(filename, filter_name_list=None, drop_non_coloured_sums=False):
+    raw_frame = read_raw_csv(filename)
+    frame = tidy_transitions(raw_frame, drop_non_coloured_sums)
+    if filter_name_list:
+        frame = filter_by_name(frame, list(filter_name_list))
+    return frame
 
 
 def tidy_places(raw_frame, drop_non_coloured_sums=False):

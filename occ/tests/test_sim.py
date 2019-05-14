@@ -8,7 +8,7 @@ import pytest
 
 from occ.model import Unit, UnitModel, ext, u, SystemModel
 from occ.sim import SimArgs, run_in_dir, run_in_tmp, run_in_next_dir, archive_to_next_dir, _IncrementalDir
-
+import occ.sim
 
 @pytest.fixture
 def a():
@@ -84,23 +84,30 @@ def test_run_in_tmp_dir(model, sim_args):
     assert sr.sim_args == sim_args
     assert sr.model == model
     desired_places = pd.read_csv(StringIO(SIMPLE_CANDLE_PLACES_STR), sep=";")
-    pd.testing.assert_frame_equal(sr.places, desired_places)
+    pd.testing.assert_frame_equal(sr.raw_places, desired_places)
     assert sr.places is not None  # lazy!
 
 
 def test_run_in_next_dir(model, sim_args, tmp_path):
     base_dir = tmp_path
-    run_dir, manifest = run_in_next_dir(model, sim_args, base_dir)
-    assert run_dir == os.path.join(tmp_path, str(0))
+    run_num, manifest = run_in_next_dir(model, sim_args, base_dir)
+
+    assert run_num == 0
+    manifest_dir = os.path.join(tmp_path, str(0), 'manifest.json')
+    assert os.path.isfile(manifest_dir)
+
+
+def test_get_default_basedir():
+    print(occ.sim.BASEDIR)
 
 
 def test_archive_in_next_dir(model, sim_args, tmp_path):
     basedir = tmp_path
     sr = run_in_tmp(model, sim_args)
 
-    run_dir, manifest_dict = archive_to_next_dir(sr, basedir)
-
-    assert run_dir == os.path.join(tmp_path, str(0))
+    run_num, manifest_dict = archive_to_next_dir(sr, basedir)
+    run_dir = os.path.join(tmp_path, str(run_num))
+    assert run_num == 0
 
     # Check manifest dict
     d = manifest_dict
@@ -121,6 +128,7 @@ def test_archive_in_next_dir(model, sim_args, tmp_path):
     # check Spike's output
     with open(os.path.join(tmp_path, str(0), 'spike', 'output', 'places.csv'), 'r') as f:
         places_str = f.read()
+    print(places_str)
     assert places_str == SIMPLE_CANDLE_PLACES_STR_WITH_TSTEP_0_INCLUDING_DECIMAL
 
 
@@ -134,13 +142,14 @@ class TestIncrementalDir:
     def test_incremental_dir_first_next_dir(self, incremental_dir):
         id_ = incremental_dir
 
-        d = id_.create_next_dir()
+        run_num, d = id_.create_next_dir()
+        assert run_num == 0
         assert d == os.path.join(id_.basedir, str(0))
         assert os.path.exists(d)
         assert id_.last_number() == 0
         assert id_.next_number() == 1
 
-        d = id_.create_next_dir()
+        run_num, d = id_.create_next_dir()
         assert d == os.path.join(id_.basedir, str(1))
         assert os.path.exists(d)
         assert id_.last_number() == 1
@@ -150,9 +159,9 @@ class TestIncrementalDir:
         id_ = incremental_dir
 
         id_.create_next_dir()
-        d = id_.create_next_dir()
-        assert d == os.path.join(id_.basedir, str(1))
-        assert os.path.exists(d)
+        run_num, run_dir = id_.create_next_dir()
+        assert run_dir == os.path.join(id_.basedir, str(1))
+        assert os.path.exists(run_dir)
         assert id_.last_number() == 1
         assert id_.next_number() == 2
 
