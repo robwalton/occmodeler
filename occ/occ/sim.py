@@ -94,7 +94,7 @@ def create_simulation_result(model, sim_args, run_dir=None, run_num=None):
         raw_places=raw_places_frame, raw_transitions=raw_transitions_frame)
 
 
-def run_in_next_dir(model: SystemModel, sim_args: SimArgs, basedir=None):
+def run(model: SystemModel, sim_args: SimArgs, basedir=None):
     """Create a new run directory in basedir and call run_in_dir.
     Returning (run_dir, manifest).
     """
@@ -108,7 +108,7 @@ def run_in_next_dir(model: SystemModel, sim_args: SimArgs, basedir=None):
     return sim_result
 
 
-def archive_to_next_dir(simulation_result: SimulationResult, basedir=None):
+def save(simulation_result: SimulationResult, basedir=None):
     """Archive a SimulationResult as if it were created with run_in_next_dir.
 
     Note, that as the SimulationResult does not include the spike/input files
@@ -144,7 +144,6 @@ def archive_to_next_dir(simulation_result: SimulationResult, basedir=None):
     sr.raw_transitions.to_csv(os.path.join(spike_run_dir, 'output', 'transitions.csv'), sep=';', index=False)
     sr.run = {'dir': archive_dir, 'num': run_number}
     return sr
-
 
 class _IncrementalDir(object):
     """Runs the integer number of the next incrementally number dir in basedir.

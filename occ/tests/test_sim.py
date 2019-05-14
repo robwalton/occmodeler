@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from occ.model import Unit, UnitModel, ext, u, SystemModel
-from occ.sim import SimArgs, run_in_dir, run_in_tmp, run_in_next_dir, archive_to_next_dir, _IncrementalDir
+from occ.sim import SimArgs, run_in_dir, run_in_tmp, run, save, _IncrementalDir
 import occ.sim
 
 @pytest.fixture
@@ -102,7 +102,7 @@ def test_run_in_tmp_dir(model, sim_args):
 
 def test_run_in_next_dir(model, sim_args, tmp_path):
     base_dir = tmp_path
-    sr = run_in_next_dir(model, sim_args, base_dir)
+    sr = run(model, sim_args, base_dir)
 
     assert sr.run['num'] == 0
     assert sr.run['dir'] == os.path.join(tmp_path, str(0))
@@ -123,7 +123,7 @@ class TestArchiveInNextDir:
         assert 'num' not in sr.run
         assert 'dir' not in sr.run
 
-        self.sim_res = archive_to_next_dir(sr, self.basedir)
+        self.sim_res = save(sr, self.basedir)
         self.rundir = os.path.join(self.basedir, str(0))
 
     def test_ran_at_all(self):
