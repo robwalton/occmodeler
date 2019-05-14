@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import re
 
-import occ.reduction.read2
+import occ.reduction.read
 import occ_test_files
 from occ.reduction import read
 
@@ -49,7 +49,7 @@ def tidy_frame():
 
 
 def test_tidy_places(raw_frame, tidy_frame):
-    frame = read.tidy_frame(raw_frame, 'place')
+    frame = read.tidy_places(raw_frame)
     log('result', frame)
     log('desired', tidy_frame)
     assert_frame_equal(frame, tidy_frame)
@@ -61,7 +61,7 @@ def test_prepend_tidy_frame_with_tstep():
     f_in['x'] = pd.Series([1, 2, 3, 4, 5, 6])
     desired = f_in.copy()
     desired.insert(0, 'tstep', pd.Series([0, 0, 1, 1, 2, 2]))
-    actual = occ.reduction.read2.prepend_tidy_frame_with_tstep(f_in)
+    actual = occ.reduction.read.prepend_tidy_frame_with_tstep(f_in)
     log('desired:', desired)
     assert_frame_equal(actual, desired)
 
@@ -72,7 +72,7 @@ def test_tidy_with_underscore_name():
         data={'Time': [0], 'a_bc_3': [1]},
         columns=['Time', 'a_bc_3'],
     )
-    tidy_frame = read.tidy_frame(input_frame, 'place')
+    tidy_frame = read.tidy_places(input_frame)
 
     desired_frame = pd.DataFrame(
         data={'time': [0], 'type': ['place'], 'name': ['a_bc'], 'num': ['3'], 'count': [1]},
@@ -120,7 +120,7 @@ class TestLoadTransitions:
             data={raw_columns[i]: [i] for i in range(len(raw_columns))},
             columns=raw_columns,
         )
-        frame = read.tidy_frame(raw_frame, 'transition')
+        frame = read.tidy_transitions(raw_frame)
         log(frame)
         assert list(frame.columns) == ['time', 'type', 'name', 'unit', 'neighbour', 'neighbour2', 'count']
 

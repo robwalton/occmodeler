@@ -2,7 +2,7 @@ import networkx as nx
 from sacred import Ingredient
 
 import occ.reduction.occasion_graph
-import occ.reduction.read2
+import occ.reduction.read
 import occ.vis.occasion_graph
 import occ.vis.network
 from pathlib import Path
@@ -27,8 +27,8 @@ def visualise_temporal_graph(places_path: Path, transitions_path: Path, medium_g
     places = read.read_csv(filename=str(places_path), node_type="place", drop_non_coloured_sums=True)
     transitions = read.read_csv(filename=str(transitions_path), node_type="transition", drop_non_coloured_sums=True)
     _, _, tstep = read.determine_time_range_of_data_frame(places)
-    places = occ.reduction.read2.prepend_tidy_frame_with_tstep(places)
-    transitions = occ.reduction.read2.prepend_tidy_frame_with_tstep(transitions)
+    places = occ.reduction.read.prepend_tidy_frame_with_tstep(places)
+    transitions = occ.reduction.read.prepend_tidy_frame_with_tstep(transitions)
 
     place_change_events = occ.reduction.occasion_graph.generate_place_increased_events(places)
     transition_events = occ.reduction.occasion_graph.generate_transition_events(transitions)
@@ -49,8 +49,8 @@ def visualise_network_animation(places_path: Path, medium_gml_path: Path, num_ru
     assert places_path.exists()
     assert medium_gml_path.exists()
 
-    places = read.read_csv(filename=str(places_path), node_type="place", drop_non_coloured_sums=True)
-    places = occ.reduction.read2.prepend_tidy_frame_with_tstep(places)
+    places = read.read_tidy_csv(filename=str(places_path), node_type="place", drop_non_coloured_sums=True)
+    places = occ.reduction.read.prepend_tidy_frame_with_tstep(places)
     medium_graph = nx.read_gml(str(medium_gml_path), destringizer=int)
 
     fig = occ.vis.network.generate_network_animation_figure_with_slider(

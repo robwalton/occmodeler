@@ -15,9 +15,15 @@ def read_csv(filename, node_type, filter_name_list=None, drop_non_coloured_sums=
     - a --> a NaN
     """
 
-    assert node_type in NODE_TYPES
     raw_frame = pd.read_csv(filename, delimiter=';')
-    frame = tidy_frame(raw_frame, node_type, drop_non_coloured_sums)
+
+    if node_type == 'place':
+        frame = tidy_places(raw_frame, drop_non_coloured_sums)
+    elif node_type == 'transition':
+        frame = tidy_transitions(raw_frame, drop_non_coloured_sums)
+    else:
+        raise TypeError(f"Unexpected type '{node_type}'")
+
 
     # Filer by name if provided
     if filter_name_list:
@@ -25,61 +31,65 @@ def read_csv(filename, node_type, filter_name_list=None, drop_non_coloured_sums=
 
     return frame
 
-# The one below worked well for just the is_neighbour func, but was not ready for are_both_neighbours
-# TRANSITION_COL_RE = r"(?P<name>[^\W_]+)(?:_+)(?P<neighbour>[0-9]+)(?:_*)(?P<unit>[^\W_]+)*"
-TRANSITION_COL_RE = r"(?P<name>[^\W_]+)(?:_+)(?P<neighbour>[0-9]+)(?:_*)(?P<neighbour2>[0-9]+(?=(?:_+)[^\W_]+))*(?:_*)(?P<unit>[0-9]+)*"
 
 def tidy_frame(raw_frame, node_type, drop_non_coloured_sums=False):
     assert node_type in NODE_TYPES
 
-    # r: gather(node, count, -Time)
+
+
+
+def tidy_places(raw_frame, drop_non_coloured_sums=False):
     frame = pd.melt(raw_frame, id_vars=['Time'])
-    frame['type'] = node_type
+    frame['type'] = 'place'
+    # Expand variable name into name and node
+    # r: separate(node, into = c("name", "num"), "sep" = "_(?!.*_)", fill = "right", extra = "merge")
+    frame['name'], frame['num'] = frame['variable'].str.rsplit('_', 1).str
+    del frame['variable']
+    frame = frame.reindex(columns=['Time', 'type', 'name', 'num', 'value'])
+    frame['Time'] = pd.to_numeric(frame['Time'], errors='coerce')
+    frame['num'] = pd.to_numeric(frame['num'], errors='coerce')
 
-    if node_type == 'place':
-        # Expand variable name into name and node
+    # frame = frame.astype({'num': np.int16, 'Time': float}, errors='coerce')
+    if drop_non_coloured_sums:
+        frame.dropna(inplace=True)
+    frame.rename(columns={'Time': 'time', 'value': 'count'}, inplace=True)
+    return frame
+
+
+
+# The one below worked well for just the is_neighbour func, but was not ready for are_both_neighbours
+# TRANSITION_COL_RE = r"(?P<name>[^\W_]+)(?:_+)(?P<neighbour>[0-9]+)(?:_*)(?P<unit>[^\W_]+)*"
+TRANSITION_COL_RE = r"(?P<name>[^\W_]+)(?:_+)(?P<neighbour>[0-9]+)(?:_*)(?P<neighbour2>[0-9]+(?=(?:_+)[^\W_]+))*(?:_*)(?P<unit>[0-9]+)*"
+
+def tidy_transitions(raw_frame, drop_non_coloured_sums=False):
+    frame = pd.melt(raw_frame, id_vars=['Time'])
+    frame['type'] = 'transition'
+    # Expand variable name into name and node
         # r: separate(node, into = c("name", "num"), "sep" = "_(?!.*_)", fill = "right", extra = "merge")
-        frame['name'], frame['num'] = frame['variable'].str.rsplit('_', 1).str
-        del frame['variable']
-        frame = frame.reindex(columns=['Time', 'type', 'name', 'num', 'value'])
-        frame['Time'] = pd.to_numeric(frame['Time'], errors='coerce')
-        frame['num'] = pd.to_numeric(frame['num'], errors='coerce')
 
-        # frame = frame.astype({'num': np.int16, 'Time': float}, errors='coerce')
-        if drop_non_coloured_sums:
-            frame.dropna(inplace=True)
+    new_col_frame = frame['variable'].str.extract(TRANSITION_COL_RE)
+    del frame['variable']
+    frame['name'] = new_col_frame['name']
+    frame['unit'] = new_col_frame['unit']
+    frame['neighbour'] = new_col_frame['neighbour']
+    frame['neighbour2'] = new_col_frame['neighbour2']
+    frame = frame.reindex(columns=['Time', 'type', 'name', 'unit', 'neighbour', 'neighbour2', 'value'])
+    # frame = frame.astype({'unit': int, 'neighbour': int, 'Time': float}, errors='ignore')
+    frame['Time'] = pd.to_numeric(frame['Time'], errors='coerce')
+    # Int columns can't have NaN!
+    # See https://stackoverflow.com/questions/11548005/numpy-or-pandas-keeping-array-type-as-integer-while-having-a-nan-value
+    frame['unit'] = pd.to_numeric(frame['unit'], errors='coerce')
+    frame['neighbour'] = pd.to_numeric(frame['neighbour'], errors='coerce')
+    frame['neighbour2'] = pd.to_numeric(frame['neighbour2'], errors='coerce')
 
-    if node_type == 'transition':
-        # Expand variable name into name and node
-        # r: separate(node, into = c("name", "num"), "sep" = "_(?!.*_)", fill = "right", extra = "merge")
-
-        new_col_frame = frame['variable'].str.extract(TRANSITION_COL_RE)
-        del frame['variable']
-        frame['name'] = new_col_frame['name']
-        frame['unit'] = new_col_frame['unit']
-        frame['neighbour'] = new_col_frame['neighbour']
-        frame['neighbour2'] = new_col_frame['neighbour2']
-        frame = frame.reindex(columns=['Time', 'type', 'name', 'unit', 'neighbour', 'neighbour2', 'value'])
-        # frame = frame.astype({'unit': int, 'neighbour': int, 'Time': float}, errors='ignore')
-        frame['Time'] = pd.to_numeric(frame['Time'], errors='coerce')
-        # Int columns can't have NaN!
-        # See https://stackoverflow.com/questions/11548005/numpy-or-pandas-keeping-array-type-as-integer-while-having-a-nan-value
-        frame['unit'] = pd.to_numeric(frame['unit'], errors='coerce')
-        frame['neighbour'] = pd.to_numeric(frame['neighbour'], errors='coerce')
-        frame['neighbour2'] = pd.to_numeric(frame['neighbour2'], errors='coerce')
-
-        if drop_non_coloured_sums:
-            frame.dropna(subset=['neighbour'], inplace=True)
+    if drop_non_coloured_sums:
+        frame.dropna(subset=['neighbour'], inplace=True)
     # msg not implemented in python yet
     # r: extract(node, c("name", "num", "msg"), "([^\\W_]+)(?:_+)([0-9]+)(?:_*)([^\\W_]+)*")
 
     # Reorder columns
     frame.rename(columns={'Time': 'time', 'value': 'count'}, inplace=True)
-
-
-
     return frame
-    # r: nodes$num < - as.integer(nodes$num)
 
 
 def filter_by_name(frame, name_list):
@@ -97,3 +107,8 @@ def determine_time_range_of_data_frame(df):
     return start, stop, step
 
 
+def prepend_tidy_frame_with_tstep(frame):
+    # TODO: probably very slow!
+    z = {v: i for i, v in enumerate(frame['time'].unique())}
+    frame.insert(0, 'tstep', frame['time'].map(z))
+    return frame
