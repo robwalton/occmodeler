@@ -20,8 +20,12 @@ logging.basicConfig(level=logging.INFO)
 BASEDIR = str(pathlib.Path(os.path.abspath(__file__)).parents[2] / 'runs')
 
 
+
+
+# TODO: provide option to create in a lzy way from a run directory
 @dataclass
 class SimulationResult:
+    run: dict  # with keys: dir and optionally num
     model: SystemModel
     sim_args: SimArgs
     places: pd.DataFrame
@@ -30,7 +34,7 @@ class SimulationResult:
     raw_transitions: pd.DataFrame
 
 
-def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir):
+def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir) -> SimulationResult:
 
     assert not os.listdir(run_dir), f"'{run_dir} is not empty'"
     spike_run_dir = os.path.join(run_dir, 'spike')
@@ -48,7 +52,7 @@ def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir):
     with open(os.path.join(run_dir, 'manifest.json'), 'w') as f:
         json.dump(manifest, f, indent=2)
 
-    return manifest
+    return create_simulation_result(model, sim_args, run_dir)
 
 
 def run_in_tmp(model: SystemModel, sim_args: SimArgs) -> SimulationResult:
@@ -61,19 +65,32 @@ def run_in_tmp(model: SystemModel, sim_args: SimArgs) -> SimulationResult:
     with tempfile.TemporaryDirectory() as tmp_dir:
 
         logging.info('Using temporary directory:' + tmp_dir)
-        manifest = run_in_dir(model, sim_args, tmp_dir)
-        output_dict = manifest['spike']['output']
+        sim_result = run_in_dir(model, sim_args, tmp_dir)
+        with open(os.path.join(tmp_dir, 'manifest.json'), "r") as read_file:
+            manifest = json.load(read_file)
+        spike_output_dict = manifest['spike']['output']
+        sim_res = create_simulation_result(model, sim_args, run_dir=tmp_dir)
+        sim_res.run = {}  # Clear as tmp_dir will be gone outside this scope!
+        return sim_res
 
-        places_path = os.path.join(tmp_dir, 'spike', output_dict['places'][0])
-        raw_places_frame = occ.read_raw_csv(places_path)
-        places_frame = occ.tidy_places(raw_places_frame)
 
-        transitions_path = os.path.join(tmp_dir, 'spike', output_dict['transitions'][0])
-        raw_transitions_frame = occ.read_raw_csv(transitions_path)
-        transitions_frame = occ.tidy_transitions(raw_transitions_frame)
+def create_simulation_result(model, sim_args, run_dir=None, run_num=None):
+
+    run_dict = {'dir': run_dir, 'num': run_num}
+    with open(os.path.join(run_dir, 'manifest.json'), "r") as read_file:
+        manifest = json.load(read_file)
+    spike_output_dict = manifest['spike']['output']
+    places_path = os.path.join(run_dir, 'spike', spike_output_dict['places'][0])
+    raw_places_frame = occ.reduction.read_raw_csv(places_path)
+    places_frame = occ.reduction.tidy_places(raw_places_frame)
+
+    transitions_path = os.path.join(run_dir, 'spike', spike_output_dict['transitions'][0])
+    raw_transitions_frame = occ.reduction.read_raw_csv(transitions_path)
+    transitions_frame = occ.reduction.tidy_transitions(raw_transitions_frame)
+
 
     return SimulationResult(
-        model=model, sim_args=sim_args, places=places_frame, transitions=transitions_frame,
+        run=run_dict, model=model, sim_args=sim_args, places=places_frame, transitions=transitions_frame,
         raw_places=raw_places_frame, raw_transitions=raw_transitions_frame)
 
 
@@ -85,8 +102,10 @@ def run_in_next_dir(model: SystemModel, sim_args: SimArgs, basedir=None):
         basedir = BASEDIR
     id_ = _IncrementalDir(basedir)
     run_num, run_dir = id_.create_next_dir()
-    manifest = run_in_dir(model, sim_args, run_dir)
-    return run_num, manifest
+    sim_result = run_in_dir(model, sim_args, run_dir)
+    assert sim_result.run['dir'] == run_dir
+    sim_result.run['num'] = run_num
+    return sim_result
 
 
 def archive_to_next_dir(simulation_result: SimulationResult, basedir=None):
@@ -123,8 +142,8 @@ def archive_to_next_dir(simulation_result: SimulationResult, basedir=None):
     # Write places.csv and transitions.csv
     sr.raw_places.to_csv(os.path.join(spike_run_dir, 'output', 'places.csv'), sep=';', index=False)
     sr.raw_transitions.to_csv(os.path.join(spike_run_dir, 'output', 'transitions.csv'), sep=';', index=False)
-
-    return run_number, manifest
+    sr.run = {'dir': archive_dir, 'num': run_number}
+    return sr
 
 
 class _IncrementalDir(object):

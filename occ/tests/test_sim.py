@@ -54,35 +54,47 @@ def incremental_dir(tmp_path):
     return _IncrementalDir(tmp_path)
 
 
-def test_run_in_dir(model, sim_args, tmp_path):
-    d = run_in_dir(model, sim_args, tmp_path)
-    print(d)
 
-    # Check manifest dict
-    assert d['system_model'] is None  # Placeholder
-    assert d['sim_args'] == {'repeat_sim': 1, 'runs': 1, 'start': 0, 'step': 0.1, 'stop': 1}
-    assert d['spike']['input']['spc'] == 'input/conf.spc'
-    assert d['spike']['input']['candl'] == 'input/system_model.candl'
-    assert d['spike']['output'] == {
-        'places': ['output/places.csv'],
-        'transitions': ['output/transitions.csv']
-    }
+# TODO: Erroneously runs setup for each method!
+class TestRunInDir:
 
-    # check manifest json
-    with open(os.path.join(tmp_path, 'manifest.json'), "r") as read_file:
-        manifest_dict = json.load(read_file)
-    assert manifest_dict == d
+    @pytest.fixture(autouse=True)  # , scope='class')
+    def setup(self, model, sim_args, tmpdir):
+        self.rundir = tmpdir.strpath
+        self.sim_res = run_in_dir(model, sim_args, tmpdir)
 
-    # check Spike's output
-    with open(os.path.join(tmp_path, 'spike', 'output', 'places.csv'), 'r') as f:
-        places_str = f.read()
-    assert places_str == SIMPLE_CANDLE_PLACES_STR
+    def test_ran_at_all(self):
+        assert self.sim_res  # is not none
+
+    def test_simres_run(self):
+        assert self.sim_res.run['dir'] == self.rundir
+        assert self.sim_res.run['num'] is None
+
+    def test_manifiset(self):
+        with open(os.path.join(self.rundir, 'manifest.json'), "r") as read_file:
+            manifest = json.load(read_file)
+        d = manifest
+        assert d['system_model'] is None  # Placeholder
+        assert d['sim_args'] == {'repeat_sim': 1, 'runs': 1, 'start': 0, 'step': 0.1, 'stop': 1}
+        assert d['spike']['input']['spc'] == 'input/conf.spc'
+        assert d['spike']['input']['candl'] == 'input/system_model.candl'
+        assert d['spike']['output'] == {
+            'places': ['output/places.csv'],
+            'transitions': ['output/transitions.csv']
+        }
+
+    def test_spike_output(self):
+        with open(os.path.join(self.rundir, 'spike', 'output', 'places.csv'), 'r') as f:
+            places_str = f.read()
+        assert places_str == SIMPLE_CANDLE_PLACES_STR
 
 
 def test_run_in_tmp_dir(model, sim_args):
     sr = run_in_tmp(model, sim_args)
     assert sr.sim_args == sim_args
     assert sr.model == model
+    assert 'num' not in sr.run
+    assert 'dir' not in sr.run
     desired_places = pd.read_csv(StringIO(SIMPLE_CANDLE_PLACES_STR), sep=";")
     pd.testing.assert_frame_equal(sr.raw_places, desired_places)
     assert sr.places is not None  # lazy!
@@ -90,9 +102,10 @@ def test_run_in_tmp_dir(model, sim_args):
 
 def test_run_in_next_dir(model, sim_args, tmp_path):
     base_dir = tmp_path
-    run_num, manifest = run_in_next_dir(model, sim_args, base_dir)
+    sr = run_in_next_dir(model, sim_args, base_dir)
 
-    assert run_num == 0
+    assert sr.run['num'] == 0
+    assert sr.run['dir'] == os.path.join(tmp_path, str(0))
     manifest_dir = os.path.join(tmp_path, str(0), 'manifest.json')
     assert os.path.isfile(manifest_dir)
 
@@ -101,35 +114,42 @@ def test_get_default_basedir():
     print(occ.sim.BASEDIR)
 
 
-def test_archive_in_next_dir(model, sim_args, tmp_path):
-    basedir = tmp_path
-    sr = run_in_tmp(model, sim_args)
+class TestArchiveInNextDir:
 
-    run_num, manifest_dict = archive_to_next_dir(sr, basedir)
-    run_dir = os.path.join(tmp_path, str(run_num))
-    assert run_num == 0
+    @pytest.fixture(autouse=True)
+    def setup(self, model, sim_args, tmpdir):
+        self.basedir = tmpdir.strpath
+        sr = run_in_tmp(model, sim_args)
+        assert 'num' not in sr.run
+        assert 'dir' not in sr.run
 
-    # Check manifest dict
-    d = manifest_dict
-    assert d['system_model'] is None  # Placeholder
-    assert d['sim_args'] == {'repeat_sim': 1, 'runs': 1, 'start': 0, 'step': 0.1, 'stop': 1}
-    assert d['spike']['input']['spc'] == 'input/conf.spc'
-    assert d['spike']['input']['candl'] == 'input/system_model.candl'
-    assert d['spike']['output'] == {
-        'places': ['output/places.csv'],
-        'transitions': ['output/transitions.csv']
-    }
+        self.sim_res = archive_to_next_dir(sr, self.basedir)
+        self.rundir = os.path.join(self.basedir, str(0))
 
-    # check manifest json
-    with open(os.path.join(tmp_path, str(0), 'manifest.json'), "r") as read_file:
-        manifest_dict = json.load(read_file)
-    assert manifest_dict == d
+    def test_ran_at_all(self):
+        assert self.sim_res  # is not none
 
-    # check Spike's output
-    with open(os.path.join(tmp_path, str(0), 'spike', 'output', 'places.csv'), 'r') as f:
-        places_str = f.read()
-    print(places_str)
-    assert places_str == SIMPLE_CANDLE_PLACES_STR_WITH_TSTEP_0_INCLUDING_DECIMAL
+    def test_simres_run(self):
+        assert self.sim_res.run['dir'] == self.rundir
+        assert self.sim_res.run['num'] == 0
+
+    def test_manifiset(self):
+        with open(os.path.join(self.rundir, 'manifest.json'), "r") as read_file:
+            manifest = json.load(read_file)
+        d = manifest
+        assert d['system_model'] is None  # Placeholder
+        assert d['sim_args'] == {'repeat_sim': 1, 'runs': 1, 'start': 0, 'step': 0.1, 'stop': 1}
+        assert d['spike']['input']['spc'] == 'input/conf.spc'
+        assert d['spike']['input']['candl'] == 'input/system_model.candl'
+        assert d['spike']['output'] == {
+            'places': ['output/places.csv'],
+            'transitions': ['output/transitions.csv']
+        }
+
+    def test_spike_output(self):
+        with open(os.path.join(self.rundir, 'spike', 'output', 'places.csv'), 'r') as f:
+            places_str = f.read()
+        assert places_str == SIMPLE_CANDLE_PLACES_STR_WITH_TSTEP_0_INCLUDING_DECIMAL
 
 
 class TestIncrementalDir:
