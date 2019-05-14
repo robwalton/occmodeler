@@ -24,8 +24,8 @@ def visualise_temporal_graph(places_path: Path, transitions_path: Path, medium_g
     assert transitions_path.exists()
     assert medium_gml_path.exists()
 
-    places = read.read_csv(filename=str(places_path), node_type="place", drop_non_coloured_sums=True)
-    transitions = read.read_csv(filename=str(transitions_path), node_type="transition", drop_non_coloured_sums=True)
+    places = read.read_tidy_csv(filename=str(places_path), node_type="place", drop_non_coloured_sums=True)
+    transitions = read.read_tidy_csv(filename=str(transitions_path), node_type="transition", drop_non_coloured_sums=True)
     _, _, tstep = read.determine_time_range_of_data_frame(places)
     places = occ.reduction.read.prepend_tidy_frame_with_tstep(places)
     transitions = occ.reduction.read.prepend_tidy_frame_with_tstep(transitions)

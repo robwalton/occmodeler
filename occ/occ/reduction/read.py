@@ -6,7 +6,7 @@ import pandas as pd
 NODE_TYPES = ('place', 'transition')
 
 
-def read_csv(filename, node_type, filter_name_list=None, drop_non_coloured_sums=False):
+def read_tidy_csv(filename, node_type, filter_name_list=None, drop_non_coloured_sums=False):
     """
     Reads a csv file created by spike with columns named according to:
     - Time --> time

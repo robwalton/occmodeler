@@ -42,10 +42,10 @@ class TestCausalPlotting(object):
 
     def test_with_run_71(self):
 
-        places = read.read_csv(
+        places = read.read_tidy_csv(
             filename=occ_test_files.files.RUN_71_PLACES,
             node_type="place", drop_non_coloured_sums=True)
-        transitions = read.read_csv(
+        transitions = read.read_tidy_csv(
             filename=occ_test_files.files.RUN_71_TRANSITIONS,
             node_type="transition", drop_non_coloured_sums=True)
         graph_medium = nx.read_gml(

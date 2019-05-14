@@ -50,7 +50,7 @@ n_runs = 100
 
 # Load time column
 places_path = os.path.join(RUN_DIR, "places.csv")
-places = read.read_csv(str(places_path), 'place', drop_non_coloured_sums=False)
+places = read.read_tidy_csv(str(places_path), 'place', drop_non_coloured_sums=False)
 time_list = places['time'].unique()
 
 
@@ -65,7 +65,7 @@ data = []
 for run_num in range(n_runs):
     places_path = os.path.join(RUN_DIR, f"places_{run_num:04d}.csv")
     assert os.path.isfile(places_path)
-    places = read.read_csv(str(places_path), 'place', drop_non_coloured_sums=False)
+    places = read.read_tidy_csv(str(places_path), 'place', drop_non_coloured_sums=False)
     places_a = places.query("name=='a'")
     pole1_places_a = places_a[places_a['num'].isin(POLE1_NODES)]
     pole2_places_a = places_a[places_a['num'].isin(POLE2_NODES)]

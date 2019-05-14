@@ -125,7 +125,7 @@ class TestLoadTransitions:
         assert list(frame.columns) == ['time', 'type', 'name', 'unit', 'neighbour', 'neighbour2', 'count']
 
     def test_with_are_both_neighbours__func_used(self):
-        transitions = read.read_csv(occ_test_files.files.RUN_90_TRANSITIONS, 'transition')
+        transitions = read.read_tidy_csv(occ_test_files.files.RUN_90_TRANSITIONS, 'transition')
         log([transitions])
 
 
