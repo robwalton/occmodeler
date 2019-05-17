@@ -110,6 +110,11 @@ def test_run_in_next_dir(model, sim_args, tmp_path):
     assert os.path.isfile(manifest_dir)
 
 
+def test_simulation_result_to_string(model, sim_args, tmp_path):
+    base_dir = tmp_path
+    sr = run(model, sim_args, base_dir)
+
+
 def test_get_default_basedir():
     print(occ.sim.BASEDIR)
 

@@ -32,8 +32,19 @@ class SimulationResult:
     transitions: pd.DataFrame
     raw_places: pd.DataFrame
     raw_transitions: pd.DataFrame
+    # place_sums: pd.DataFrame
+    # transition_sums: pd.DataFrame
 
-    
+    def __str__(self):
+        s = 'SimulationResult: '
+        if 'num' in self.run:
+            return s + f"run['num']={self.run['num']}"
+        elif 'dir' in self.run:
+            return s + f"run['dir']={self.run['dir']}"
+        else:
+            return s + "temporary run"
+
+    __repr__ = __str__
 
 
 def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir) -> SimulationResult:
@@ -83,19 +94,23 @@ def create_simulation_result(model, run_dir=None, run_num=None):
     with open(os.path.join(run_dir, 'manifest.json'), "r") as read_file:
         manifest = json.load(read_file)
     spike_output_dict = manifest['spike']['output']
+
     places_path = os.path.join(run_dir, 'spike', spike_output_dict['places'][0])
     raw_places_frame = occ.reduction.read_raw_csv(places_path)
-    places_frame = occ.reduction.tidy_places(raw_places_frame)
-
+    places_frame = occ.reduction.tidy_places(raw_places_frame, drop_non_coloured_sums=True)
+    places_frame = occ.reduction.prepend_tidy_frame_with_tstep(places_frame)
     transitions_path = os.path.join(run_dir, 'spike', spike_output_dict['transitions'][0])
     raw_transitions_frame = occ.reduction.read_raw_csv(transitions_path)
-    transitions_frame = occ.reduction.tidy_transitions(raw_transitions_frame)
+    transitions_frame = occ.reduction.tidy_transitions(raw_transitions_frame, drop_non_coloured_sums=True)
+    transitions_frame = occ.reduction.prepend_tidy_frame_with_tstep(transitions_frame)
 
     sim_arg_dict = manifest['sim_args']
     sim_args = SimArgs(**sim_arg_dict)
     return SimulationResult(
-        run=run_dict, model=model, sim_args=sim_args, places=places_frame, transitions=transitions_frame,
+        run=run_dict, model=model, sim_args=sim_args,
+        places=places_frame, transitions=transitions_frame,
         raw_places=raw_places_frame, raw_transitions=raw_transitions_frame)
+        # place_sums=place_sums_frame, transition_sums=transition_sums_frame)
 
 
 def run(model: SystemModel, sim_args: SimArgs, basedir=None):
