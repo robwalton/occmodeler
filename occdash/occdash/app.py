@@ -14,26 +14,22 @@ from flask_caching import Cache
 import occ.reduction
 import occ.reduction.occasion_graph
 import occ.sim
-from occ.sim import SimulationResult
 import occ.vis.analysis
 import occ.vis.network_dash
 import occ.vis.occasion_graph
 import occdash
-from occ.reduction import read
-from pyspike.sacred.sacredrun import SacredRun
-
-# RUN_180 = SacredRun(Path(occdash.__file__).parent.parent / 'tests' / 'files' / 'run_180')
+from occ.sim import SimulationResult
 
 
 logging.basicConfig(level=logging.DEBUG)
 
 
-TEST_MODE = True  # TODO: disable!
+TEST_MODE = False
 
 if TEST_MODE:
     RUN_PATH_BASE = Path(occdash.__file__).parent.parent / 'tests' / 'files'
 else:
-    RUN_PATH_BASE = Path('/Users/walton/Documents/DPhil/code/occmodeller/runs')
+    RUN_PATH_BASE = Path('/Users/walton/Documents/DPhil/code/occmodeller/runs')  # TODO: find based on occ.__file__
 
 
 def load_medium_graph(medium_gml_path: Path):
@@ -76,6 +72,11 @@ app.layout = html.Div([
 
     html.Div(id='url-error'),  # Leave empty unless error to display
 
+#     html.Div(id='page-content')
+# YOUAU ARE HERE
+# See: https://dash.plot.ly/urls
+
+
     html.Div(
         dcc.Graph(
             id='occasion-graph-graph',
@@ -104,41 +105,12 @@ app.layout = html.Div([
     ),
 
     dcc.Markdown('''
-
-#### Todo
-
-- Check all old features working
-- Add cache
-- Create a table showing run info
-- Make the big grap take 800 wide and stack other 2
-
-
-#### Feature ideas
-
+# Options
 - Create a link that zooms into the big graph
 - Allow selection of nodes in the network graph to filer those shown in causal graph
 - Animate movie button
 - Export state at time button
-- DIAMOND - show that multiple open windows may interact.
-
-#### Done
-
-****
-
-#### Simulation side
-[ ] Use exported state
-
-
-#### Tips
-
-
-Dash supports [Markdown](http://commonmark.org/help).
-
-Markdown is a simple way to write and format text.
-It includes a syntax for things like **bold text** and *italics*,
-[links](http://commonmark.org/help), inline `code` snippets, lists,
-quotes, and more.
-    '''),
+'''),
 
 ])
 
@@ -310,6 +282,9 @@ def run_id_from_url(pathname):
         raise ValueError(f"url path must begin with '/run-'. It is '{pathname}'")
     else:
         _, num = pathname.split('/run-')
+        if num == 'last':
+            inc_dir = occ.sim._IncrementalDir(RUN_PATH_BASE)
+            num = inc_dir.last_number()
         run_path = RUN_PATH_BASE / str(num)
         if (not run_path.exists()) or (not run_path.is_dir()):
             raise ValueError("run number {} does not point to a run directory. '{}' is not a directory".format(num, run_path))
@@ -379,7 +354,6 @@ def run_path(run_id):
 #
 #
 #
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
