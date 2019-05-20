@@ -74,7 +74,8 @@ class TestRunInDir:
         with open(os.path.join(self.rundir, 'manifest.json'), "r") as read_file:
             manifest = json.load(read_file)
         d = manifest
-        assert d['system_model'] is None  # Placeholder
+        assert d['model']['network'] == 'model/medium_graph.gml' # Placeholder
+        assert d['model']['network_name'] == 'two graph' # Placeholder
         assert d['sim_args'] == {'repeat_sim': 1, 'runs': 1, 'start': 0, 'step': 0.1, 'stop': 1}
         assert d['spike']['input']['spc'] == 'input/conf.spc'
         assert d['spike']['input']['candl'] == 'input/system_model.candl'
@@ -124,6 +125,8 @@ def test_load(model, sim_args, tmp_path):
     actual = load(0, tmp_path)
     assert expected.run == actual.run
     # assert expected.model == actual.model  # model not currently stored!
+    assert nx.algorithms.isomorphism.is_isomorphic(
+        expected.model.network, actual.model.network)
     assert expected.sim_args == actual.sim_args
     pd.testing.assert_frame_equal(expected.places, actual.places)
     pd.testing.assert_frame_equal(expected.transitions, actual.transitions)
@@ -150,11 +153,10 @@ class TestArchiveInNextDir:
         assert self.sim_res.run['dir'] == self.rundir
         assert self.sim_res.run['num'] == 0
 
-    def test_manifiset(self):
+    def test_manifiset(self, model):
         with open(os.path.join(self.rundir, 'manifest.json'), "r") as read_file:
             manifest = json.load(read_file)
         d = manifest
-        assert d['system_model'] is None  # Placeholder
         assert d['sim_args'] == {'repeat_sim': 1, 'runs': 1, 'start': 0, 'step': 0.1, 'stop': 1}
         assert d['spike']['input']['spc'] == 'input/conf.spc'
         assert d['spike']['input']['candl'] == 'input/system_model.candl'

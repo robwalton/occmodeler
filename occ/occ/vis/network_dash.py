@@ -5,6 +5,7 @@ import numpy as np
 import plotly.graph_objs as go
 
 import pyspike
+from pyspike.exe import SimArgs
 from pyspike.util import render_name
 
 
@@ -116,7 +117,7 @@ def _generate_plotly_node_data_trace_list(places, medium_layout, tstep, ordered_
     # return data
 
 
-def generate_network_figure(places, medium_graph, sacred_run, t):
+def generate_network_figure(places, medium_graph, sim_args: SimArgs, t):
 
 
 
@@ -141,10 +142,10 @@ def generate_network_figure(places, medium_graph, sacred_run, t):
     else:
         place_offsets_dict = {}
 
-    sim_args = sacred_run.config['spike']['sim_args']
-    num_runs = sim_args['runs']
-    t_start = sim_args['interval']['start'],
-    t_step = sim_args['interval']['step'],
+    # sim_args = sacred_run.config['spike']['sim_args']
+    num_runs = sim_args.runs
+    t_start = sim_args.start
+    t_step = sim_args.step
 
 
     # TODO: We need to do this but why?

@@ -6,6 +6,7 @@ import pathlib
 import tempfile
 from dataclasses import dataclass
 
+import networkx as nx
 import pandas as pd
 
 import occ.reduction
@@ -28,12 +29,14 @@ class SimulationResult:
     run: dict  # with keys: dir and optionally num
     model: SystemModel
     sim_args: SimArgs
-    places: pd.DataFrame
-    transitions: pd.DataFrame
+    places: pd.DataFrame  # drop_non_coloured_sums=True
+    transitions: pd.DataFrame  # drop_non_coloured_sums=True
     raw_places: pd.DataFrame
     raw_transitions: pd.DataFrame
     # place_sums: pd.DataFrame
     # transition_sums: pd.DataFrame
+
+
 
     def __str__(self):
         s = 'SimulationResult: '
@@ -51,13 +54,24 @@ def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir) -> SimulationResu
 
     assert not os.listdir(run_dir), f"'{run_dir} is not empty'"
     spike_run_dir = os.path.join(run_dir, 'spike')
+    model_dir = os.path.join(run_dir, 'model')
     os.makedirs(spike_run_dir)
+    os.makedirs(model_dir)
 
+    # Write model
+    medium_path = os.path.join(model_dir, 'medium_graph.gml')
+    nx.write_gml(model.network, medium_path, repr)
+    system_model = {'unit': None, 'network': 'model/medium_graph.gml',
+                    'network_name': model.network_name, 'marking': None}
+
+
+    # Run spike
     candl_file_path = model.unit.to_candl_string(model.network, model.network_name)
     spike_manifest_dict = pyspike.exe.run_in_dir(candl_file_path, sim_args, spike_run_dir)
 
+    # Create manifest
     manifest = {
-        'system_model': None,
+        'model': system_model,
         'sim_args': dataclasses.asdict(sim_args),
         'spike': dict(spike_manifest_dict)
     }
@@ -88,13 +102,16 @@ def run_in_tmp(model: SystemModel, sim_args: SimArgs) -> SimulationResult:
         return sim_res
 
 
-def create_simulation_result(model, run_dir=None, run_num=None):
+
+# TODO: move inside SimulationResult
+def create_simulation_result(model=None, run_dir=None, run_num=None):
 
     run_dict = {'dir': run_dir, 'num': run_num}
     with open(os.path.join(run_dir, 'manifest.json'), "r") as read_file:
         manifest = json.load(read_file)
-    spike_output_dict = manifest['spike']['output']
 
+    # Load spike output
+    spike_output_dict = manifest['spike']['output']
     places_path = os.path.join(run_dir, 'spike', spike_output_dict['places'][0])
     raw_places_frame = occ.reduction.read_raw_csv(places_path)
     places_frame = occ.reduction.tidy_places(raw_places_frame, drop_non_coloured_sums=True)
@@ -104,6 +121,12 @@ def create_simulation_result(model, run_dir=None, run_num=None):
     transitions_frame = occ.reduction.tidy_transitions(raw_transitions_frame, drop_non_coloured_sums=True)
     transitions_frame = occ.reduction.prepend_tidy_frame_with_tstep(transitions_frame)
 
+    # model
+    if not model:
+        network = nx.read_gml(os.path.join(run_dir, 'model', 'medium_graph.gml'), destringizer=int)
+        model = SystemModel(unit=None, network=network, network_name=2, marking=None)
+
+    # sim args
     sim_arg_dict = manifest['sim_args']
     sim_args = SimArgs(**sim_arg_dict)
     return SimulationResult(
@@ -165,7 +188,7 @@ def save(simulation_result: SimulationResult, basedir=None):
     return sr
 
 
-def load(run_num, basedir=None):
+def load(run_num, basedir=None) -> SimulationResult:
     if not basedir:
         basedir = BASEDIR
     run_dir = os.path.join(basedir, str(run_num))
@@ -174,8 +197,7 @@ def load(run_num, basedir=None):
     if not os.path.isdir(run_dir):
         raise ValueError(f"'{run_dir}' is not a dir")
 
-    model = None  # Not currently stored
-    sr = create_simulation_result(model, run_dir, run_num)
+    sr = create_simulation_result(model=None, run_dir=run_dir, run_num=run_num)
     return sr
 
 
@@ -236,9 +258,3 @@ class _IncrementalDir(object):
     # Create candl file for Spike
 
 
-# def _write_gml(graph, graph_name, dir):
-#     graph_name = graph_name.replace(' ', '-')
-#     assert not graph_name.endswith('.gml')
-#     medium_path = os.path.join(dir, graph_name + '.gml')
-#     nx.write_gml(graph, medium_path, repr)
-#     return medium_path

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from pathlib import Path
@@ -8,33 +9,35 @@ import dash_html_components as html
 import networkx
 import networkx as nx
 from dash.dependencies import Input, Output
-import json
 from flask_caching import Cache
 
+import occ.reduction
 import occ.reduction.occasion_graph
-import occ.reduction.read
-import occdash
-import occ.vis.occasion_graph
+import occ.sim
+from occ.sim import SimulationResult
 import occ.vis.analysis
 import occ.vis.network_dash
+import occ.vis.occasion_graph
+import occdash
 from occ.reduction import read
 from pyspike.sacred.sacredrun import SacredRun
 
-RUN_180 = SacredRun(Path(occdash.__file__).parent.parent / 'tests' / 'files' / 'run_180')
+# RUN_180 = SacredRun(Path(occdash.__file__).parent.parent / 'tests' / 'files' / 'run_180')
+
+
 logging.basicConfig(level=logging.DEBUG)
 
 
+TEST_MODE = True  # TODO: disable!
+
+if TEST_MODE:
+    RUN_PATH_BASE = Path(occdash.__file__).parent.parent / 'tests' / 'files'
+else:
+    RUN_PATH_BASE = Path('/Users/walton/Documents/DPhil/code/occmodeller/runs')
 
 
 def load_medium_graph(medium_gml_path: Path):
     return nx.read_gml(str(medium_gml_path), destringizer=int)
-
-
-RUN_PATH_BASE = Path('/Users/walton/Documents/DPhil/proof-of-concept/runs')
-
-
-MEDIUM_GRAPH = load_medium_graph(RUN_180.medium_graph_path)
-
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -181,8 +184,9 @@ def update_network_graph(run_id, t):
         return None
     changed_places = changed_places_df(run_id)
     changed_places.dropna(inplace=True)
+    sr = simulation_result(run_id)
     figure = occ.vis.network_dash.generate_network_figure(
-        changed_places, medium_graph(run_id), sacred_run(run_id), t)
+        changed_places, sr.model.network, sr.sim_args, t)
     return figure
 
 
@@ -214,7 +218,7 @@ def update_place_count_graph(run_id):
     logging.info(f'Updating place-count-graph for run_id: {run_id}')
     if run_id is None:
         return None
-    return occ.vis.analysis.generate_sums_by_state_figure(places=places_df(run_id))
+    return occ.vis.analysis.generate_sums_by_state_figure(places=places_with_non_coloured_sums(run_id))
 
 
 
@@ -256,14 +260,15 @@ def update_occasion_graph_graph(run_id):
     if run_id is None:
         return None
 
-    run = sacred_run(run_id)
-    tstep = run.config['spike']['sim_args']['interval']['step']
-
-    places = read.read_tidy_csv(filename=str(run.places_path), node_type="place", drop_non_coloured_sums=True)
-    transitions = read.read_tidy_csv(filename=str(run.transitions_path), node_type="transition", drop_non_coloured_sums=True)
-    _, _, tstep = read.determine_time_range_of_data_frame(places)
-    places = occ.reduction.read.prepend_tidy_frame_with_tstep(places)
-    transitions = occ.reduction.read.prepend_tidy_frame_with_tstep(transitions)
+    sr = simulation_result(run_id)
+    # run = sacred_run(run_id)
+    # tstep = run.config['spike']['sim_args']['interval']['step']
+    tstep = sr.sim_args.step
+    places = sr.places  # read.read_tidy_csv(filename=str(run.places_path), node_type="place", drop_non_coloured_sums=True)
+    transitions = sr.transitions  # read.read_tidy_csv(filename=str(run.transitions_path), node_type="transition", drop_non_coloured_sums=True)
+    # _, _, tstep = read.determine_time_range_of_data_frame(places)
+    # places = occ.reduction.read.prepend_tidy_frame_with_tstep(places)
+    # transitions = occ.reduction.read.prepend_tidy_frame_with_tstep(transitions)
 
     place_change_events = occ.reduction.occasion_graph.generate_place_increased_events(places)
     transition_events = occ.reduction.occasion_graph.generate_transition_events(transitions)
@@ -272,8 +277,7 @@ def update_occasion_graph_graph(run_id):
         place_change_events, transition_events, time_per_step=tstep)
 
     return occ.vis.occasion_graph.generate_causal_graph_figure(
-            occasion_graph, medium_graph(run_id))
-    return causal_graph
+            occasion_graph, sr.model.network)
 
 #########
 
@@ -322,44 +326,59 @@ def json_to_graph(s: str):
     return networkx.readwrite.json_graph.node_link_graph(data)
 
 
+@cache.memoize()
+def simulation_result(run_id) -> SimulationResult:
+    # logging.warning("app.load_simulation_results() is *not cached* !!")
+    return occ.sim.load(run_path(run_id))
 ###
 
-@cache.memoize()
-def places_df(run_id):
-    run = sacred_run(run_id)
-    places = read.read_tidy_csv(filename=str(run.places_path), node_type="place", drop_non_coloured_sums=False)
-    places = occ.reduction.read.prepend_tidy_frame_with_tstep(places)
-    return places
-    # return places.to_json(orient='split')
+# @cache.memoize()
+# def places_df(run_id):  # drop_non_coloured_sums=False
+#     sr = simulation_result(run_id)
+#     places = read.read_tidy_csv(filename=str(run.places_path), node_type="place", drop_non_coloured_sums=False)
+#     places = occ.reduction.read.prepend_tidy_frame_with_tstep(places)
+#     return places
+#     # return places.to_json(orient='split')
 
 
 @cache.memoize()
 def changed_places_df(run_id):
-    places = places_df(run_id)
+    # logging.warning("app.changed_places_df() is *not cached* !!")
+
+    sr = simulation_result(run_id)
+    places = sr.places  # NOTE oringial did NOT drop non - coloured sums
+    # places = places_df(run_id)
     place_changes = occ.reduction.occasion_graph.filter_place_changed_events(places)
     place_changes.sort_values('tstep')
     return place_changes
     # return place_changes.to_json(orient='split')
 
-
 @cache.memoize()
-def medium_graph(run_id):
-    run = sacred_run(run_id)
-    return load_medium_graph(run.medium_graph_path)
-    # return graph_to_json(g)
+def places_with_non_coloured_sums(run_id):  # TODO: replace with non-coloured sums only
+    # logging.warning("app.places_with_non_colour_sums() is *not cached* !!")
+    sr = simulation_result(run_id)
+    return occ.reduction.tidy_places(sr.raw_places, drop_non_coloured_sums=False)
+#
+#
+# @cache.memoize()
+# def medium_graph(run_id):
+#     run = sacred_run(run_id)
+#     return load_medium_graph(run.medium_graph_path)
+#     # return graph_to_json(g)
 
 #####
 
 def run_path(run_id):
     return RUN_PATH_BASE / str(run_id)
 
-
-def sacred_run(run_id):
-    return SacredRun(run_path(run_id))
-
-
-
-
+#
+# def sacred_run(run_id):
+#     return SacredRun(run_path(run_id))
+#
+#
+#
+#
+#
 
 
 if __name__ == '__main__':

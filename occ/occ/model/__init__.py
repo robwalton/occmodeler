@@ -18,5 +18,5 @@ __all__ = ['u', 'n1', 'n2', 'Unit', 'UnitModel', 'follow1', 'follow2', 'ext', 'P
 class SystemModel:
     unit: UnitModel
     network: nx.Graph  # multiple later. depends on unit
-    network_name: str
+    network_name: str  # TODO: move onto nx.Graph attribute
     marking: dict = None
