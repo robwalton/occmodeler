@@ -10,6 +10,8 @@ Interactive versions of the papers figures are [here](https://robwalton.github.i
 
 A PDF of the paper will be available soon.
 
+See `occ's` Jupyter notebook [occ's tutorial](occ/tutorial.ipynb).
+
 ## Dependencies and Installation
 
 For now, check out the whole repo. It includes PyCharm configuration for paths.
