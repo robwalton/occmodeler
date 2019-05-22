@@ -10,7 +10,7 @@ Interactive versions of the papers figures are [here](https://robwalton.github.i
 
 A PDF of the paper will be available soon.
 
-See `occ's` Jupyter notebook [occ's tutorial](occ/tutorial.ipynb).
+See `occ's` [Jupyter notebook tutorial](occ/tutorial.ipynb).
 
 ## Dependencies and Installation
 
