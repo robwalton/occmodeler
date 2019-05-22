@@ -16,8 +16,8 @@ class SimArgs:
     start: float
     step: float
     stop: float
-    runs: int
-    repeat_sim: int
+    runs: int = 1
+    repeat_sim: int = 1
 
 
 def run_in_dir(candl_str: str, sim_args: SimArgs, spike_run_dir, skip_call=False):

@@ -55,7 +55,7 @@ def generate_causal_graph_figure(
         pos = nx.get_node_attributes(medium_graph, 'pos')
         if pos:
             medium_layout = pos
-            print(pos)
+            # print(pos)
         else:
             medium_layout = nx.spring_layout(medium_graph, dim=2)
 
