@@ -55,18 +55,25 @@ class SimulationResult:
 
 def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir) -> SimulationResult:
 
+    # Create dirs
     assert not os.listdir(run_dir), f"'{run_dir} is not empty'"
     spike_run_dir = os.path.join(run_dir, 'spike')
     model_dir = os.path.join(run_dir, 'model')
     os.makedirs(spike_run_dir)
     os.makedirs(model_dir)
 
+    # Move offsets from places onto graph
+    assert model.network
+    model.network.graph['offsets'] = {}
+    for place in model.unit.places:
+        assert len(place.pos_offset) == 2
+        model.network.graph['offsets'][place.name] = tuple(place.pos_offset)
+
     # Write model
     medium_path = os.path.join(model_dir, 'medium_graph.gml')
     nx.write_gml(model.network, medium_path, repr)
     system_model = {'unit': None, 'network': 'model/medium_graph.gml',
                     'network_name': model.network_name, 'marking': None}
-
 
     # Run spike
     candl_file_path = model.unit.to_candl_string(model.network, model.network_name)
