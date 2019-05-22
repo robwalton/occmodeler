@@ -1,6 +1,8 @@
 import json
 import logging
 import os
+import pathlib
+import sys
 from pathlib import Path
 
 import dash
@@ -11,13 +13,39 @@ import networkx as nx
 from dash.dependencies import Input, Output
 from flask_caching import Cache
 
+
+def _add_package_to_path(package_name):
+    package_dir = str(pathlib.Path(os.path.abspath(__file__)).parents[2] / package_name)
+    print(f"occdash.app.py Manually adding '{package_dir}' to path")
+    sys.path.insert(0, package_dir)
+
+# TODO: package properly!
+
+try:
+    import occ
+except ModuleNotFoundError:
+    _add_package_to_path('occ')
+
+
+try:
+    import pyspike
+except ModuleNotFoundError:
+    _add_package_to_path('pyspike')
+
+try:
+    import occdash
+except ModuleNotFoundError:
+    _add_package_to_path('occdash')
+
+
+
 import occ.reduction
 import occ.reduction.occasion_graph
 import occ.sim
 import occ.vis.analysis
 import occ.vis.network_dash
 import occ.vis.occasion_graph
-import occdash
+
 from occ.sim import SimulationResult
 
 
@@ -72,11 +100,6 @@ app.layout = html.Div([
 
     html.Div(id='url-error'),  # Leave empty unless error to display
 
-#     html.Div(id='page-content')
-# YOUAU ARE HERE
-# See: https://dash.plot.ly/urls
-
-
     html.Div(
         dcc.Graph(
             id='occasion-graph-graph',
@@ -86,6 +109,7 @@ app.layout = html.Div([
         ),
         style={'display': 'inline-block'}
     ),
+
     html.Div([
         dcc.Graph(
             id='place-count-graph',
@@ -104,18 +128,11 @@ app.layout = html.Div([
         id='run-info',
     ),
 
-    dcc.Markdown('''
-# Options
-- Create a link that zooms into the big graph
-- Allow selection of nodes in the network graph to filer those shown in causal graph
-- Animate movie button
-- Export state at time button
-'''),
-
 ])
 
 
-@app.callback(Output('run-id', 'data'), [Input('url', 'pathname')])
+@app.callback(Output('run-id', 'data'),
+              [Input('url', 'pathname')])
 def update_run_id(pathname):
     try:
         run_id = run_id_from_url(pathname)  # throws ValueError
@@ -125,7 +142,8 @@ def update_run_id(pathname):
     return run_id
 
 
-@app.callback(Output('url-error', 'children'), [Input('url', 'pathname')])
+@app.callback(Output('url-error', 'children'),
+              [Input('url', 'pathname')])
 def update_url_error(pathname):
     try:
         run_id_from_url(pathname)
@@ -136,14 +154,18 @@ def update_url_error(pathname):
     return None
 
 
-@app.callback(Output('run-info', 'children'), [Input('run-id', 'data')])
-def update_run_info(run_id):
-    if run_id is None:
-        return None
-    else:
+@app.callback(Output('run-info', 'children'),
+              [Input('url', 'pathname')])
+              # [Input('run-id', 'data')])  # not working for some reason
+def update_run_info(pathname):
+
+    try:
+        run_id = run_id_from_url(pathname)
         return html.Div([
-            html.H3(f"Run {run_id} at path {run_path(run_id)}")
+            html.P(f"Run {run_id} at path {run_path(run_id)}")
         ])
+    except ValueError:
+        return None
 
 #####
 
