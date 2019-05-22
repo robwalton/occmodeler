@@ -14,6 +14,10 @@ import pyspike.exe
 from occ.model import SystemModel
 from pyspike.exe import SimArgs
 
+import occdash.manage
+
+
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -37,11 +41,10 @@ class SimulationResult:
     # transition_sums: pd.DataFrame
 
 
-
     def __str__(self):
         s = 'SimulationResult: '
         if 'num' in self.run:
-            return s + f"run['num']={self.run['num']}"
+            return s + f"run['num']={self.run['num']}. http://127.0.0.1:8050/run-{self.run['num']}"
         elif 'dir' in self.run:
             return s + f"run['dir']={self.run['dir']}"
         else:
@@ -78,6 +81,8 @@ def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir) -> SimulationResu
 
     with open(os.path.join(run_dir, 'manifest.json'), 'w') as f:
         json.dump(manifest, f, indent=2)
+
+    occdash.manage.reload_dash_server()
 
     return create_simulation_result(model, run_dir)
 
