@@ -1,13 +1,21 @@
-from setuptools import setup
+from setuptools import setup, find_packages
+
+with open("README", 'r') as f:
+    long_description = f.read()
 
 setup(
-    name='proof-of-concept',
-    version='',
-    packages=['tests', 'tests.files', 'pyspike', 'pyspike.sacred', 'websci19', 'websci19.tests'],
-    package_dir={'': 'src/pyspike'},
+    name='pyspike',
+    version='0.5',
+    packages=find_packages(),
     url='',
-    license='',
-    author='walton',
+    license='MIT',
+    author='Rob Walton',
     author_email='',
-    description=''
+    long_description=long_description,
+    install_requires=[
+        'colorlover',
+        'networkx',
+        'pandas'
+    ],  # external packages as dependencies
+
 )
