@@ -14,7 +14,15 @@ import pyspike.exe
 from occ.model import SystemModel
 from pyspike.exe import SimArgs
 
-import occdash.manage
+
+try:
+    import occdash.manage
+    OCCDASH_AVAILABLE = True
+except ImportError:
+    OCCDASH_AVAILABLE = False
+
+
+
 
 
 
@@ -89,7 +97,8 @@ def run_in_dir(model: SystemModel, sim_args: SimArgs, run_dir) -> SimulationResu
     with open(os.path.join(run_dir, 'manifest.json'), 'w') as f:
         json.dump(manifest, f, indent=2)
 
-    occdash.manage.reload_dash_server()
+    if OCCDASH_AVAILABLE:
+        occdash.manage.reload_dash_server()
 
     return create_simulation_result(model, run_dir)
 

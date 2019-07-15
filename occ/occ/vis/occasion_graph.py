@@ -2,7 +2,7 @@ from enum import Enum
 
 import networkx as nx
 import numpy as np
-import dash_core_components as dcc
+# import dash_core_components as dcc
 
 
 import pyspike.model
@@ -141,22 +141,22 @@ def render_plot(edge_trace_list, medium_edge_trace, node_trace_list, run_id=None
     return fig
 
 
-def create_dash_graph(edge_trace_list, medium_edge_trace, node_trace_list, run_id=None):
-    title = f"Temporal graph for run {run_id}" if run_id else "Temporal graph"
-    g = dcc.Graph(dict(
-        data=[medium_edge_trace] + node_trace_list + edge_trace_list,
-        layout=dcc.Layout(
-            title=title,
-            # showlegend=False,
-            hovermode='closest',
-            scene=dict(
-                xaxis=NOAXIS,
-                yaxis=NOAXIS,
-                zaxis=NOAXIS
-            )
-        )
-    ))
-    return g
+# def create_dash_graph(edge_trace_list, medium_edge_trace, node_trace_list, run_id=None):
+#     title = f"Temporal graph for run {run_id}" if run_id else "Temporal graph"
+#     g = dcc.Graph(dict(
+#         data=[medium_edge_trace] + node_trace_list + edge_trace_list,
+#         layout=dcc.Layout(
+#             title=title,
+#             # showlegend=False,
+#             hovermode='closest',
+#             scene=dict(
+#                 xaxis=NOAXIS,
+#                 yaxis=NOAXIS,
+#                 zaxis=NOAXIS
+#             )
+#         )
+#     ))
+#     return g
 
 
 def generate_occasion_trace(occasion_list, color, medium_layout, t_to_z):

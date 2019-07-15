@@ -1,0 +1,7 @@
+# pyspike
+
+## Install
+pyspike is not on pypi. Install with:
+
+    pip install "git+git://github.com/robwalton/occmodeler.git/#egg=pyspike&subdirectory=pyspike"
+

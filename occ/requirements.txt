@@ -1,7 +1,10 @@
+-e git+git://github.com/robwalton/occmodeler.git#egg=pyspike&subdirectory=pyspike
 plotly
 pandas
 networkx
-pyspike
-cufflinks
+matplotlib
+pytest
+
+
 
 
