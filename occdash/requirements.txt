@@ -8,5 +8,5 @@ networkx
 pyspike
 flask_caching
 redis
-redis-py
+
 

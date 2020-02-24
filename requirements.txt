@@ -1,0 +1,15 @@
+colorlover
+networkx
+pandas
+pytest
+plotly
+pandas
+networkx
+matplotlib
+pytest
+dash
+dash-renderer
+dash-html-components
+dash-core-components
+flask_caching
+redis

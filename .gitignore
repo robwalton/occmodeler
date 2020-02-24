@@ -2,3 +2,13 @@ _spike
 runs
 *.html
 *-checkpoint.ipynb
+.idea
+.history
+*.tox
+*__pycache__
+*.pyc
+tmp_runs
+*.rdb
+.ipynb_checkpoints
+*.egg-info/
+
