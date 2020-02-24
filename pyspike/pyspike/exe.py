@@ -3,20 +3,13 @@ import os
 import subprocess
 from dataclasses import dataclass
 
+
 import pyspike.spcconf
+from pyspike.spcconf import SimArgs
 
 logging.basicConfig(level=logging.INFO)
 
 CANDL_FILE_NAME = 'system_model.candl'
-
-
-@dataclass
-class SimArgs:
-    start: float
-    step: float
-    stop: float
-    runs: int = 1
-    repeat_sim: int = 1
 
 
 def run_in_dir(candl_str: str, sim_args: SimArgs, spike_run_dir, skip_call=False):
@@ -74,33 +67,9 @@ def _prep_for_spike_call(candl_string: str, sim_args: SimArgs, spike_run_dir):
     with open(os.path.join(run_dir_input, CANDL_FILE_NAME), 'w') as f:
         f.write(candl_string)
 
-    # Create spc conf file for Spike
 
-    spike_model_args = {}
-    spike_sim_args = {
-        "name": "Diffusion",
-        "type": "stochastic",
-        "solver": "direct",
-        "threads": 0,
-        "interval": {
-            "start": sim_args.start,
-            "step": sim_args.step,
-            "stop": sim_args.stop,
-        },
-        "runs": sim_args.runs,
-        "export": [
-            {
-                "places": [],
-                "to": "output/places.csv"
-            },
-            {
-                "transitions": [],
-                "to": "output/transitions.csv"
-            }
-        ]
-    }
     places_path_list, transitions_path_list, spc_string = pyspike.spcconf.create_conf_file(
-        CANDL_FILE_NAME, spike_model_args, spike_sim_args, sim_args.repeat_sim)
+        CANDL_FILE_NAME, sim_args)
 
     # Write conf file
     spc_path = os.path.join(run_dir_input, 'conf.spc')
@@ -113,7 +82,7 @@ def _prep_for_spike_call(candl_string: str, sim_args: SimArgs, spike_run_dir):
 
 def call_spike(working_dir, spc_path):
     assert os.path.isfile(os.path.join(working_dir, spc_path))
-    args = ["~/bin/spike exe -f {}".format(spc_path)]
+    args = ["~/bin/spike exe -f={}".format(spc_path)]
     logging.info(f"Calling: '{str(args)}' from cwd: {working_dir}")
     subprocess.run(args, cwd=working_dir, shell=True)  # check=True)
     logging.info(f"Call to Spike complete")

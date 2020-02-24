@@ -19,6 +19,9 @@ def test_run_in_dir_without_separate_marking():  # m, medium_graph):
 
     with open(os.path.join(tmp_dir, 'output', 'places.csv'), 'r') as f:
         places_str = f.read()
+    print('---')
+    print(places_str)
+    print('---')
     assert places_str == SIMPLE_CANDLE_PLACES_STR
 
 
