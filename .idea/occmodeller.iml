@@ -8,6 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/pyspike" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/occ" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/occ/.tox" />
+      <excludeFolder url="file://$MODULE_DIR$/occdash/.tox" />
       <excludeFolder url="file://$MODULE_DIR$/pyspike/.tox" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.7 (sci)" jdkType="Python SDK" />
