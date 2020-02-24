@@ -12,3 +12,4 @@ tmp_runs
 .ipynb_checkpoints
 *.egg-info/
 
+*.pyc
